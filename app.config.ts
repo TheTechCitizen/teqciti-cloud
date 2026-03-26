@@ -13,6 +13,12 @@ export default defineAppConfig({
      address: 'NA'
    },
 
+  dashboardHome: '',
+
+  dash: {
+    defaultAvatar: '/img/avatars/3.png'
+  },
+
   navbar: {
     ctashow: true,
     cta: "Login",

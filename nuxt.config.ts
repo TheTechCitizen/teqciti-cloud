@@ -4,7 +4,11 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   ssr: false,
 
-  extends: [['../../templates/ttc-template/basea', { install: true }]],
+extends: [
+      ['../../templates/ttc-template/basea', { install: true }],
+      ['../../templates/ttc-template/auth',],
+      ['../../templates/ttc-template/dash',],
+  ],
 
   modules: ['@nuxt/eslint'],
 })
