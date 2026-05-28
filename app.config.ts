@@ -19,6 +19,11 @@ export default defineAppConfig({
     defaultAvatar: '/img/avatars/3.png'
   },
 
+   auth: {
+    provider: 'primary' 
+  },
+
+
   navbar: {
     ctashow: true,
     cta: "Login",
