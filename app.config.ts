@@ -20,7 +20,8 @@ export default defineAppConfig({
   },
 
    auth: {
-    provider: 'primary' 
+    provider: 'primary',
+    redirect: '/login'
   },
 
 

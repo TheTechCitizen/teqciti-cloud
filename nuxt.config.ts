@@ -36,7 +36,6 @@ extends: [
     
     public: {
       link: process.env.API_URL,
-      token: process.env.API_TOKEN,
       devSystemToken: process.env.NODE_ENV === 'development' 
         ? process.env.API_TOKEN 
         : undefined,

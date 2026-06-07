@@ -4,25 +4,27 @@ import type { DirectusServiceConfig } from "../../../templates/ttc-template/data
 
 export const catalogApiSchema = z.object({
   id: z.string(),
+  date_created: z.string(),
   type: z.enum(['product', 'service']),
   name: z.string().min(1),
   description: z.string().min(1),
   startingPrice: z.number(),
   icon: z.string().min(1),
   colorBg: z.string().min(1),
-  image: z.string().min(1),
+  image: z.string().nullable(),
 });
 
 export type CatalogApi = z.infer<typeof catalogApiSchema>;
 
 export interface Catalog extends Entity {
   type: 'product' | 'service';
+  date_created: string;
   name: string;
   description: string;
   startingPrice: number;
   icon: string;
   colorBg: string;
-  image: string;
+  image: string;_
 }
 
 export const catalogServiceConfig: DirectusServiceConfig<Catalog, CatalogApi> = {

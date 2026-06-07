@@ -9,10 +9,11 @@
       <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiLz48L3N2Zz4=')] [mask-image:linear-gradient(to_bottom,white,transparent)]"></div>
 
       <div class="relative z-10 flex items-center gap-3">
-        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 shadow-[0_0_20px_rgba(168,85,247,0.4)]">
-          <Icon name="lucide:hexagon" size="28" class="text-white fill-white/20" />
-        </div>
-        <span class="text-3xl font-bold text-white tracking-tight">Techciti</span>
+   
+      <div class="flex h-12 w-12 items-center justify-center rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.4)]">
+  <img src="/img/logo.png" size="48" class="text-white fill-white/20 animate-pulse duration-1000" />
+</div>
+        <span class="text-3xl font-bold text-white tracking-tight">Teqciti Cloud</span>
       </div>
 
       <div class="relative z-10 w-full max-w-2xl mt-12">
@@ -38,7 +39,7 @@
             </div>
             <div class="rounded-lg bg-slate-900/50 p-3">
               <p class="text-sm font-semibold text-slate-200">Michael Ochieng</p>
-              <p class="text-xs text-slate-400 mt-1">Requested: Teeth Whitening</p>
+              <p class="text-xs text-slate-400 mt-1">Requested: New Booking</p>
             </div>
           </div>
 
@@ -178,6 +179,10 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({
+    layout: 'blank',
+})
+
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 

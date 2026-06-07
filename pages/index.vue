@@ -1,17 +1,20 @@
 <template>
   <div class="mx-auto w-full max-w-4xl px-4 py-8 pb-28 sm:px-6 lg:px-8 relative min-h-screen space-y-10">
     
-    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div class="flex items-center gap-4">
-        <div class="relative h-14 w-14 rounded-full bg-gradient-to-tr from-purple-500 to-emerald-500 p-0.5">
-          <div class="h-full w-full rounded-full bg-slate-900 border-2 border-slate-900 overflow-hidden">
-            <img src="https://ui-avatars.com/api/?name=David+M&background=1e293b&color=a855f7&size=150" alt="Profile" class="h-full w-full object-cover" />
-          </div>
-          <div class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-emerald-500 ring-2 ring-slate-950"></div>
-        </div>
+      <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+
+  <div class="relative h-14 w-14 rounded-full bg-gradient-to-tr from-purple-500 to-emerald-500 p-0.5">
+    
+    <div class="flex h-full w-full items-center justify-center rounded-full border-2 border-slate-900 bg-slate-900 overflow-hidden font-bold text-xl text-purple-500 tracking-wide">
+      {{ userInitials }}
+    </div>
+
+    <div class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-emerald-500 ring-2 ring-slate-950"></div>
+  </div>
         <div>
           <p class="text-sm font-medium text-slate-400">{{ greeting }},</p>
-          <h1 class="text-2xl font-bold tracking-tight text-white">David</h1>
+          <h1 class="text-2xl font-bold tracking-tight text-white">{{ user.first_name }}</h1>
         </div>
       </div>
       
@@ -79,7 +82,7 @@
           </div>
           <div class="mt-4 flex items-center justify-between border-t border-slate-700/50 pt-3">
             <p class="text-xs font-semibold text-white">
-              {{ project.status === 'Pending Setup' ? 'Pending' : `Kes${project.totalCost.toLocaleString()}` }}
+              {{ project.status === 'Pending Setup' ? 'Pending' : `Ksh${project.totalCost.toLocaleString()}` }}
             </p>
             <Icon name="lucide:chevron-right" size="16" class="text-slate-500 group-hover:text-purple-400 transition-colors" />
           </div>
@@ -116,7 +119,7 @@
               <p class="text-sm text-slate-400 leading-relaxed flex-1 line-clamp-2">{{ item.description }}</p>
               <div class="mt-4 flex items-center justify-between border-t border-slate-700/50 pt-4">
                 <p class="text-xs text-slate-500">Starting at</p>
-                <p class="text-sm font-semibold text-white">${{ item.startingPrice.toLocaleString() }}</p>
+                <p class="text-sm font-semibold text-white">Ksh {{ item.startingPrice.toLocaleString() }}</p>
               </div>
             </div>
           </div>
@@ -147,7 +150,7 @@
               <p class="text-sm text-slate-400 leading-relaxed flex-1 line-clamp-2">{{ item.description }}</p>
               <div class="mt-4 flex items-center justify-between border-t border-slate-700/50 pt-4">
                 <p class="text-xs text-slate-500">Fixed Price</p>
-                <p class="text-sm font-semibold text-white">${{ item.startingPrice.toLocaleString() }}</p>
+                <p class="text-sm font-semibold text-white">Ksh {{ item.startingPrice.toLocaleString() }}</p>
               </div>
             </div>
           </div>
@@ -424,6 +427,8 @@ definePageMeta({
     requiresAuth: true
 });
 
+const { user, userInitials } = useAuth();
+
 const config = useRuntimeConfig()
 
 type ItemType = 'service' | 'product'
@@ -454,14 +459,13 @@ const projects = ref<Project[]>([])
 const activeProject = ref<Project | null>(null)
 const isAddingToProject = ref(false)
 
+import type { Catalog } from "~/schemas/catalog.schema";
 
-// --- FETCH DATA WITH BEARER TOKEN ---
-const { data: catalog, pending, error } = await useFetch<CatalogItem[]>(`${config.public.link}/items/catalog`, {
-  headers: {
-    Authorization: `Bearer ${config.public.token}`
-  },
-  transform: (response: any) => response.data
-})
+const catalog = useCatalog();
+
+  console.log(catalog)
+
+
 
 // --- COMPUTED CATALOG SPLITS ---
 // Safely falls back to an empty array while 'catalog' is pending from the API
