@@ -1,13 +1,10 @@
-import { orgServiceConfig } from "./org.schema";
-import { catalogServiceConfig } from "./catalog.schema";
-import { projectServiceConfig } from "./project.schema";
+import baseaDataConfig from '@basea-layer/schemas';
+import teqcitiDataConfig from '@teqciti-layer/schemas';
 
 const dataConfig = {
-  org: orgServiceConfig,
-  catalog: catalogServiceConfig,
-  projects: projectServiceConfig,
+  ...baseaDataConfig,
+  ...teqcitiDataConfig
 };
 
 // Export it as the default.
 export default dataConfig;
-

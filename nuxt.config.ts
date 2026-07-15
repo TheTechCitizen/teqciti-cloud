@@ -24,6 +24,7 @@ extends: [
       ['../../templates/ttc-template/basea', { install: true }],
       ['../../templates/ttc-template/data',],
       ['../../templates/ttc-template/auth',],
+      ['../teqciti-layer',],
   ],
 
   site: {
@@ -36,6 +37,7 @@ extends: [
     
     public: {
       link: process.env.API_URL,
+      cloudA: process.env.CLOUD_A,
       devSystemToken: process.env.NODE_ENV === 'development' 
         ? process.env.API_TOKEN 
         : undefined,
@@ -45,8 +47,10 @@ extends: [
 
 
   alias: {
+    '@basea-layer': resolve(__dirname, '../../templates/ttc-template/basea'),
     '@data-layer': resolve(__dirname, '../../templates/ttc-template/data'),
     '@ecommerce-layer': resolve(__dirname, '../../templates/ttc-template/ecommerce'),
+    '@teqciti-layer': resolve(__dirname, '../teqciti-layer'),
   },
 
 })

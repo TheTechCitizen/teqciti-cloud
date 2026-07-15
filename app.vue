@@ -2,6 +2,7 @@
   <NuxtLayout>
     <NuxtLoadingIndicator />
     <NuxtPage />
+    <NotifierC />
   </NuxtLayout>
 </template>
 

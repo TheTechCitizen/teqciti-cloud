@@ -24,6 +24,31 @@ export default defineAppConfig({
     redirect: '/login'
   },
 
+  permissions: {
+    member: [
+      'access_member_only_view', 
+    ],
+    admin: [
+      'view_projects',
+      'add_projects',
+      'view_services',
+      'view_reports',
+      'view_call_center',
+      'view_team',
+      'manage_team'
+    ],
+    owner: [
+      'view_projects', 
+      'add_projects', 
+      'view_services', 
+      'view_reports', 
+      'view_call_center',
+      'view_team',
+      'manage_team',
+      'view_billing'
+    ]
+  },
+
 
   navbar: {
     ctashow: true,

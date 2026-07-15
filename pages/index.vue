@@ -1,5 +1,9 @@
 <template>
   <div class="mx-auto w-full max-w-4xl px-4 py-8 pb-28 sm:px-6 lg:px-8 relative min-h-screen space-y-10">
+
+      <!-- ========================================== -->
+    <!-- 1. UNIVERSAL HEADER (Seen by everyone)     -->
+    <!-- ========================================== -->
     
       <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div class="flex items-center gap-4">
@@ -19,16 +23,10 @@
       </div>
       
       <div class="flex items-center gap-3">
-        <button 
-          @click="showNotifications = true"
-          class="relative flex h-10 w-10 items-center justify-center rounded-full bg-slate-800/50 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors ring-1 ring-slate-700/50"
-        >
-          <Icon name="lucide:bell" size="18" />
-          <span v-if="unreadCount > 0" class="absolute top-0 right-0 flex h-3 w-3 items-center justify-center rounded-full bg-rose-500 ring-2 ring-slate-950">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-          </span>
-        </button>
-        <NuxtLink to ="/settings">
+
+          <NotificationTrayDropdown />
+
+         <NuxtLink to ="/settings">
         <button class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-800/50 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors ring-1 ring-slate-700/50">
           <Icon name="lucide:settings" size="18" />
         </button>
@@ -36,7 +34,55 @@
       </div>
     </header>
 
-    <section>
+   <!-- ========================================= -->
+    <!-- 2. QUICK START (The Zen Welcome)          -->
+    <!-- Seen by Agents/Team Members               -->
+    <!-- ========================================= -->
+    <section v-if="can('access_member_only_view')" class="relative w-full overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 p-6 sm:p-8 lg:p-12 shadow-xl">
+      
+      <div class="absolute top-0 right-0 w-80 h-80 bg-pink-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+      <div class="absolute bottom-0 left-0 w-80 h-80 bg-purple-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+
+      <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 lg:gap-12">
+        
+        <div class="flex-1 text-center md:text-left space-y-4 max-w-xl">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs font-semibold text-purple-400">
+              {{ orgName || 'Teqciti' }}
+          </span>
+          
+          <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
+            Welcome to your <br />
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-pink-500">
+              Workspace
+            </span>
+          </h1>
+          
+          <p class="text-slate-400 text-sm sm:text-base leading-relaxed">
+            What would you like to achieve today? 
+            Explore your shortcuts down below to get started 
+          </p>
+        </div>
+
+        <div class="w-full md:w-auto flex justify-center shrink-0">
+          <div class="relative z-0 isolate group p-4 sm:p-6 bg-slate-950/40 rounded-3xl border border-slate-800/80 backdrop-blur-md shadow-2xl transition-all duration-500 hover:border-purple-500/30">
+            <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-purple-500/40 rounded-tl-xl"></div>
+            <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-pink-500/40 rounded-br-xl"></div>
+            
+            <img 
+              src="/img/illustrations/1.png" 
+              alt="Workspace Illustration" 
+              class="w-48 h-48 sm:w-56 sm:h-56 lg:w-64 lg:h-64 object-contain transition-transform duration-500 group-hover:scale-105"
+            />
+          </div>
+        </div>
+
+      </div>
+    </section>
+       <!-- ========================================== -->
+   <!-- 3. PROJECTS (Seen by only admins and owners)             -->
+    <!-- ========================================== -->
+
+    <section v-if="can('view_projects')" >
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-bold text-white">Your Projects</h2>
       </div>
@@ -62,14 +108,14 @@
           <div class="flex justify-between items-start mb-4">
             <div class="flex -space-x-2 overflow-hidden">
               <div 
-                v-for="(item, idx) in project.items.slice(0, 3)" 
+                v-for="(item, idx) in project.servicesIncluded.slice(0, 3)" 
                 :key="idx"
                 class="inline-block h-8 w-8 rounded-full ring-2 ring-slate-900 bg-slate-800 flex items-center justify-center z-10 relative"
               >
                 <Icon :name="item.icon" size="14" :class="item.iconColor" />
               </div>
-              <div v-if="project.items.length > 3" class="inline-block h-8 w-8 rounded-full ring-2 ring-slate-900 bg-slate-700 flex items-center justify-center z-0 relative">
-                <span class="text-[10px] font-bold text-slate-300">+{{ project.items.length - 3 }}</span>
+              <div v-if="project.servicesIncluded.length > 3" class="inline-block h-8 w-8 rounded-full ring-2 ring-slate-900 bg-slate-700 flex items-center justify-center z-0 relative">
+                <span class="text-[10px] font-bold text-slate-300">+{{ project.servicesIncluded.length - 3 }}</span>
               </div>
             </div>
             <span :class="['inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ring-1 ring-inset', getStatusStyles(project.status)]">
@@ -78,11 +124,11 @@
           </div>
           <div>
             <h3 class="text-base font-bold text-white truncate">{{ project.name }}</h3>
-            <p class="text-xs text-slate-400 mt-0.5">{{ project.items.length }} Item(s) Included</p>
+            <p class="text-xs text-slate-400 mt-0.5">{{ project.servicesIncluded.length }} Item(s) Included</p>
           </div>
           <div class="mt-4 flex items-center justify-between border-t border-slate-700/50 pt-3">
             <p class="text-xs font-semibold text-white">
-              {{ project.status === 'Pending Setup' ? 'Pending' : `Ksh${project.totalCost.toLocaleString()}` }}
+              {{ getProjectPriceDisplay(project) }}
             </p>
             <Icon name="lucide:chevron-right" size="16" class="text-slate-500 group-hover:text-purple-400 transition-colors" />
           </div>
@@ -90,7 +136,11 @@
       </div>
     </section>
 
-    <section class="space-y-8">
+    <!-- ========================================== -->
+    <!-- 4. OWNER CATALOG (Seen by admins and owners)     -->
+    <!-- ========================================== -->
+
+    <section v-if="can('view_services')" class="space-y-8">
       <div class="flex items-center justify-between border-b border-slate-700/50 pb-4">
         <h2 class="text-xl font-bold text-white">Discover Solutions</h2>
       </div>
@@ -119,7 +169,7 @@
               <p class="text-sm text-slate-400 leading-relaxed flex-1 line-clamp-2">{{ item.description }}</p>
               <div class="mt-4 flex items-center justify-between border-t border-slate-700/50 pt-4">
                 <p class="text-xs text-slate-500">Starting at</p>
-                <p class="text-sm font-semibold text-white">Ksh {{ item.startingPrice.toLocaleString() }}</p>
+                <p class="text-sm font-semibold text-white">Ksh {{ priceDisplay(item.startingPrice) }}</p>
               </div>
             </div>
           </div>
@@ -150,7 +200,7 @@
               <p class="text-sm text-slate-400 leading-relaxed flex-1 line-clamp-2">{{ item.description }}</p>
               <div class="mt-4 flex items-center justify-between border-t border-slate-700/50 pt-4">
                 <p class="text-xs text-slate-500">Fixed Price</p>
-                <p class="text-sm font-semibold text-white">Ksh {{ item.startingPrice.toLocaleString() }}</p>
+                <p class="text-sm font-semibold text-white">Ksh {{ priceDisplay(item.startingPrice) }}</p>
               </div>
             </div>
           </div>
@@ -213,7 +263,7 @@
       </div>
     </div>
 
-    <div v-if="setupItems.length > 0" class="fixed inset-0 z- flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div v-if="setupItems.length > 0 && can('add_projects')" class="fixed inset-0 z- flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity" @click="closeSetupModal"></div>
       
       <div class="relative w-full max-w-xl rounded-t-3xl sm:rounded-3xl bg-slate-900 ring-1 ring-slate-700 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-full sm:zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
@@ -251,7 +301,7 @@
                     <p class="text-sm font-bold text-white">{{ item.name }}</p>
                     <span :class="['text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-md font-bold', item.type === 'service' ? 'bg-purple-500/20 text-purple-400' : 'bg-emerald-500/20 text-emerald-400']">{{ item.type }}</span>
                   </div>
-                  <p class="text-xs text-slate-400 font-medium">${{ item.startingPrice.toLocaleString() }}</p>
+                  <p class="text-xs text-slate-400 font-medium">Ksh {{ priceDisplay(item.startingPrice) }}</p>
                   <button v-if="setupItems.length > 1" @click="removeItemFromSetup(item.id)" class="text-slate-500 hover:text-rose-400 transition-colors p-1 ml-2">
                     <Icon name="lucide:trash-2" size="16" />
                   </button>
@@ -262,7 +312,7 @@
             <div class="rounded-xl bg-purple-500/10 p-4 ring-1 ring-purple-500/20 flex gap-3 items-start">
               <Icon name="lucide:shield-check" size="20" class="text-purple-400 shrink-0 mt-0.5" />
               <div>
-                <p class="text-sm font-semibold text-purple-300">Total Est: ${{ currentSetupTotal.toLocaleString() }}</p>
+                <p class="text-sm font-semibold text-purple-300">Total Est: Ksh{{ currentSetupTotal.toLocaleString() }}</p>
                 <p class="mt-1 text-xs text-purple-200/70 leading-relaxed">No charges today. Billing is deferred until project scope is reviewed.</p>
               </div>
             </div>
@@ -289,7 +339,7 @@
                   </div>
                   <div class="flex-1">
                     <p class="text-sm font-bold text-white">{{ item.name }}</p>
-                    <p class="text-xs text-slate-400">+${{ item.startingPrice.toLocaleString() }}</p>
+                    <p class="text-xs text-slate-400">+Ksh {{ priceDisplay(item.startingPrice) }}</p>
                   </div>
                   <Icon name="lucide:plus-circle" size="18" class="text-slate-500 group-hover:text-purple-400" />
                 </div>
@@ -305,7 +355,7 @@
                   </div>
                   <div class="flex-1">
                     <p class="text-sm font-bold text-white">{{ item.name }}</p>
-                    <p class="text-xs text-slate-400">+${{ item.startingPrice.toLocaleString() }}</p>
+                    <p class="text-xs text-slate-400">+Ksh {{ priceDisplay(item.startingPrice) }}</p>
                   </div>
                   <Icon name="lucide:plus-circle" size="18" class="text-slate-500 group-hover:text-emerald-400" />
                 </div>
@@ -317,7 +367,7 @@
       </div>
     </div>
 
-    <div v-if="activeProject" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div v-if="activeProject && can('view_projects')" class="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity" @click="closeProjectDetails"></div>
       
       <div class="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-3xl bg-slate-900 ring-1 ring-slate-700 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
@@ -347,7 +397,7 @@
             </div>
 
             <div class="rounded-xl border border-slate-700/50 bg-slate-800/30 overflow-hidden divide-y divide-slate-700/50">
-              <div v-for="item in activeProject.items" :key="item.id" class="p-4 flex items-center gap-4 hover:bg-slate-800/50 transition-colors">
+              <div v-for="item in activeProject.servicesIncluded" :key="item.id" class="p-4 flex items-center gap-4 hover:bg-slate-800/50 transition-colors">
                 <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-900 ring-1 ring-slate-700">
                   <Icon :name="item.icon" size="18" :class="item.iconColor" />
                 </div>
@@ -358,16 +408,13 @@
                   </div>
                   <p class="text-xs text-slate-400 mt-0.5 line-clamp-1">{{ item.description }}</p>
                 </div>
-                <div class="text-right">
-                  <p class="text-sm font-semibold text-white">${{ item.startingPrice.toLocaleString() }}</p>
-                </div>
-              </div>
+                             </div>
             </div>
 
             <div class="rounded-xl bg-slate-800/50 p-4 border border-slate-700/50 flex justify-between items-center mt-6">
-              <span class="text-sm text-slate-400">Total Estimated Cost</span>
+              <span class="text-sm text-slate-400">Status</span>
               <span class="text-lg font-bold text-white">
-                {{ activeProject.status === 'Pending Setup' ? 'Pending Review' : `$${activeProject.totalCost.toLocaleString()}` }}
+                {{ activeProject.status }}
               </span>
             </div>
           </div>
@@ -389,7 +436,7 @@
                   </div>
                   <div class="flex-1">
                     <p class="text-sm font-bold text-white">{{ item.name }}</p>
-                    <p class="text-xs text-slate-400">+${{ item.startingPrice.toLocaleString() }}</p>
+                    <p class="text-xs text-slate-400">+Ksh {{ priceDisplay(item.startingPrice) }}</p>
                   </div>
                   <Icon name="lucide:plus-circle" size="18" class="text-slate-500 group-hover:text-purple-400" />
                 </div>
@@ -405,7 +452,7 @@
                   </div>
                   <div class="flex-1">
                     <p class="text-sm font-bold text-white">{{ item.name }}</p>
-                    <p class="text-xs text-slate-400">+${{ item.startingPrice.toLocaleString() }}</p>
+                    <p class="text-xs text-slate-400">+Ksh {{ priceDisplay(item.startingPrice) }}</p>
                   </div>
                   <Icon name="lucide:plus-circle" size="18" class="text-slate-500 group-hover:text-emerald-400" />
                 </div>
@@ -421,112 +468,229 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue';
+import type { CatalogItem } from "~/schemas/catalog.schema"; // Assuming this is your exported type
+import type { Project } from "~/schemas/project.schema";
 
 definePageMeta({
-    requiresAuth: true
+  requiresAuth: true
 });
 
-const { user, userInitials } = useAuth();
+const config = useRuntimeConfig();
+const { user, userInitials } = useAuth(); 
 
-const config = useRuntimeConfig()
+// 1. Instantly grab the global organization context
+const { currentOrg, orgId, myOrgRole, orgName } = await useCurrentOrg();
+const { can } = usePermissions();
 
-type ItemType = 'service' | 'product'
+// --- 1. INITIALIZE DATA SERVICES ---
+const projectService = useDataService<Project>('projects');
+const { catalog, services: catalogServices, products: catalogProducts } = await useCatalog();
 
-interface CatalogItem {
-  id: string; 
-  type: ItemType; 
-  name: string; 
-  description: string; 
-  startingPrice: number; 
-  icon: string; 
-  // Made these optional since they aren't in your Directus DB schema yet
-  iconColor?: string; 
-  image?: string; 
-  colorBg?: string;
-}
+// --- 2. STATE MANAGEMENT ---
+const projects = ref<Project[]>([]);
+const activeProject = ref<Project | null>(null);
+const isAddingToProject = ref(false);
 
-interface Project {
-  id: string; 
-  name: string; 
-  items: CatalogItem[]; 
-  status: 'Pending Setup' | 'Active' | 'Completed'; 
-  totalCost: number; 
-  createdAt: string;
-}
+const isCreating = ref(false); // Used to disable buttons during API calls
+const isUpdating = ref(false);
 
-const projects = ref<Project[]>([])
-const activeProject = ref<Project | null>(null)
-const isAddingToProject = ref(false)
+const setupItems = ref<CatalogItem[]>([]);
+const newProjectName = ref('');
+const isAddingToSetup = ref(false);
 
-import type { Catalog } from "~/schemas/catalog.schema";
-
-const catalog = useCatalog();
-
-  console.log(catalog)
+const priceDisplay = computed(() => {
+  return (price: any) => {
+    // 🚨 FIX: Force it to be a string safely
+    const safePrice = String(price ?? '0');
+    
+    // Regex: Check if the string only contains digits (and optional commas/decimals)
+    const isNumeric = /^\d+$/.test(safePrice.replace(/,/g, ''));
+    
+    if (isNumeric) {
+      // It's a number, format it as currency
+      return `Ksh ${parseInt(safePrice.replace(/,/g, '')).toLocaleString()}`;
+    }
+    
+    // It's a label like "Variable" or "Pay as you go", return as is
+    return safePrice;
+  };
+});
 
 
+// Helper function to calculate total price for added services
+const getProjectPriceDisplay = (project: Project) => {
+  // 1. Handle the "Pending" state first
+  if (project.status === 'pending' || !project.servicesIncluded || project.servicesIncluded.length === 0) {
+    return 'Pending';
+  }
 
-// --- COMPUTED CATALOG SPLITS ---
-// Safely falls back to an empty array while 'catalog' is pending from the API
-const catalogServices = computed(() => (catalog.value || []).filter(c => c.type === 'service'))
-const catalogProducts = computed(() => (catalog.value || []).filter(c => c.type === 'product'))
+  // 2. Calculate the numeric total safely
+  // We parse each item because some might be "Variable" strings
+  const numericTotal = project.servicesIncluded.reduce((sum, item) => {
+    const p = parseInt(item.startingPrice.replace(/,/g, ''));
+    return sum + (isNaN(p) ? 0 : p);
+  }, 0);
 
-const showNotifications = ref(false)
-const notifications = ref([
-  { id: 'n1', title: 'Welcome to Teqcit', message: 'Thank you for signing up. We are ready and committed to being with you on this brand journey', time: '2m ago', icon: 'lucide:receipt', color: 'text-emerald-400', bg: 'bg-emerald-500/10', unread: true },
-])
-const unreadCount = computed(() => notifications.value.filter(n => n.unread).length)
-const markAllRead = () => notifications.value.forEach(n => n.unread = false)
+  // 3. If the total is 0 but there are items, it likely means they are all "Variable"
+  if (numericTotal === 0 && project.servicesIncluded.length > 0) {
+    // Return the name of the first item or a generic label
+    return project.servicesIncluded.startingPrice; 
+  }
 
-const setupItems = ref<CatalogItem[]>([])
-const newProjectName = ref('')
-const isAddingToSetup = ref(false)
+  // 4. Otherwise, return the formatted currency
+  return `Ksh ${numericTotal.toLocaleString()}`;
+};
 
-const currentSetupTotal = computed(() => setupItems.value.reduce((sum, item) => sum + item.startingPrice, 0))
+// Calculate totals dynamically based on included items
+const currentSetupTotal = computed(() => {
+  return setupItems.value.reduce((sum, item) => {
+    // Convert to number; if it's text like "Variable", it becomes NaN
+    const price = parseInt(item.startingPrice.replace(/,/g, ''));
+    
+    // If it's not a number, we add 0 to the total
+    return sum + (isNaN(price) ? 0 : price);
+  }, 0);
+});
 
-const availableBundleServices = computed(() => catalogServices.value.filter(c => !setupItems.value.some(s => s.id === c.id)))
-const availableBundleProducts = computed(() => catalogProducts.value.filter(c => !setupItems.value.some(s => s.id === c.id)))
+const availableBundleServices = computed(() => catalogServices.value.filter(c => !setupItems.value.some(s => s.id === c.id)));
+const availableBundleProducts = computed(() => catalogProducts.value.filter(c => !setupItems.value.some(s => s.id === c.id)));
 
 const availableProjectServices = computed(() => {
-  if (!activeProject.value) return []
-  return catalogServices.value.filter(c => !activeProject.value!.items.some(i => i.id === c.id))
-})
+  if (!activeProject.value) return [];
+  return catalogServices.value.filter(c => !activeProject.value!.servicesIncluded.some(i => i.id === c.id));
+});
 const availableProjectProducts = computed(() => {
-  if (!activeProject.value) return []
-  return catalogProducts.value.filter(c => !activeProject.value!.items.some(i => i.id === c.id))
-})
+  if (!activeProject.value) return [];
+  return catalogProducts.value.filter(c => !activeProject.value!.servicesIncluded.some(i => i.id === c.id));
+});
 
+// 2. Fetch projects securely based on the composable's orgId
+// We use watchEffect so if the orgId takes a moment to hydrate, it automatically runs once available
+watchEffect(async () => {
+  if (orgId.value) {
+    projects.value = await projectService.getFiltered({
+      filter: { org: { _eq: orgId.value } },
+      fields: ['*', 'services_included.catalog_id.*'] 
+    });
+  }
+});
+
+
+
+
+// --- 4. PROJECT CREATION LOGIC ---
 const initiateCreate = (item: CatalogItem) => {
-  setupItems.value = [item]
-  newProjectName.value = `My ${item.name} Project`
-  isAddingToSetup.value = false
-}
-const addItemToSetup = (item: CatalogItem) => { setupItems.value.push(item); isAddingToSetup.value = false }
-const removeItemFromSetup = (itemId: string) => { setupItems.value = setupItems.value.filter(i => i.id !== itemId) }
-const closeSetupModal = () => { setupItems.value = [] }
-const confirmNewProject = () => {
-  if (setupItems.value.length === 0) return
-  projects.value.unshift({ id: `proj_${Date.now()}`, name: newProjectName.value || 'New Workspace', items: [...setupItems.value], status: 'Pending Setup', totalCost: currentSetupTotal.value, createdAt: 'Just now' })
-  closeSetupModal()
-}
+  setupItems.value = [item];
+  newProjectName.value = `My ${item.name} Project`;
+  isAddingToSetup.value = false;
+};
 
-const openProjectDetails = (project: Project) => { activeProject.value = project; isAddingToProject.value = false; document.body.style.overflow = 'hidden' }
-const closeProjectDetails = () => { activeProject.value = null; isAddingToProject.value = false; document.body.style.overflow = '' }
-const addItemToProject = (item: CatalogItem) => {
-  if (!activeProject.value) return
-  activeProject.value.items.push(item)
-  activeProject.value.totalCost = activeProject.value.items.reduce((sum, i) => sum + i.startingPrice, 0)
-  isAddingToProject.value = false
-}
+const addItemToSetup = (item: CatalogItem) => { 
+  setupItems.value.push(item); 
+  isAddingToSetup.value = false; 
+};
 
-const hour = new Date().getHours()
-const greeting = computed(() => hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening')
+const removeItemFromSetup = (itemId: string) => { 
+  setupItems.value = setupItems.value.filter(i => i.id !== itemId); 
+};
+
+const closeSetupModal = () => { 
+  setupItems.value = []; 
+};
+
+const confirmNewProject = async () => {
+  if (setupItems.value.length === 0 || isCreating.value) return;
+  if (!orgId.value) {
+    console.error("Missing Organization ID! Cannot link this project.");
+    return;
+  }
+
+  isCreating.value = true;
+
+  try {
+    const payload = {
+      name: newProjectName.value || 'New Workspace',
+      status: 'pending',
+      org: orgId.value, // Securely pulled from the composable
+      services_included: setupItems.value.map(item => ({ catalog_id: item.id }))
+    };
+
+    const newProject = await projectService.create(payload);
+    
+    if (newProject) {
+      // No need to call from we can just use the local setupItems to populate the UI
+      const fullyPopulatedProject = {
+        ...newProject,
+        servicesIncluded: [...setupItems.value],
+      };
+
+      // Now inject it into the UI—no missing icons!
+      projects.value.unshift(fullyPopulatedProject);
+      closeSetupModal();
+    }
+  } catch (error) {
+    console.error("Failed to create project:", error);
+    // Handle toast notification here
+  } finally {
+    isCreating.value = false;
+  }
+};
+
+
+// --- 5. PROJECT UPDATE LOGIC ---
+const openProjectDetails = (project: Project) => { 
+  activeProject.value = project; 
+  isAddingToProject.value = false; 
+  document.body.style.overflow = 'hidden'; 
+};
+
+const closeProjectDetails = () => { 
+  activeProject.value = null; 
+  isAddingToProject.value = false; 
+  document.body.style.overflow = ''; 
+};
+
+const addItemToProject = async (item: CatalogItem) => {
+  if (!activeProject.value || isUpdating.value) return;
+  isUpdating.value = true;
+
+  try {
+    // In Directus, updating a M2M field requires passing the new item to append.
+    // The syntax `{ "+": [...] }` appends to the junction table without deleting existing items.
+    const payload = {
+      services_included: {
+        "+": [{ catalog_id: item.id }]
+      }
+    };
+
+    const updatedProject = await projectService.update(activeProject.value.id, payload);
+
+    if (updatedProject) {
+      // Update local state to immediately reflect the change
+      activeProject.value.servicesIncluded.push(item);
+      // Re-calculate the total cost or rely on a computed property
+      activeProject.value.totalCost = activeProject.value.servicesIncluded.reduce((sum, i) => sum + i.startingPrice, 0);
+    }
+  } catch (error) {
+    console.error("Failed to add item to project:", error);
+  } finally {
+    isUpdating.value = false;
+    isAddingToProject.value = false;
+  }
+};
+
+const hour = new Date().getHours();
+const greeting = computed(() => hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening');
+
 const getStatusStyles = (status: Project['status']) => {
   switch (status) { 
-    case 'Pending Setup': return 'bg-amber-500/10 text-amber-400 ring-amber-500/20'; 
-    case 'Active': return 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20'; 
-    case 'Completed': return 'bg-slate-500/10 text-slate-400 ring-slate-500/20'; 
+    case 'pending': return 'bg-amber-500/10 text-amber-400 ring-amber-500/20'; 
+    case 'active': return 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20'; 
+    case 'completed': return 'bg-slate-500/10 text-slate-400 ring-slate-500/20'; 
+    default: return 'bg-slate-500/10 text-slate-400 ring-slate-500/20';
   }
-}
+};
 </script>
+
+

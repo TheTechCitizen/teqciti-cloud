@@ -82,7 +82,7 @@
         <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 shadow-lg shadow-purple-500/30">
           <Icon name="lucide:hexagon" size="24" class="text-white fill-white/20" />
         </div>
-        <span class="text-2xl font-bold text-white tracking-tight">Techciti</span>
+        <span class="text-2xl font-bold text-white tracking-tight">Teqciti</span>
       </div>
 
       <div class="mb-8">
@@ -132,10 +132,7 @@
         <div>
           <div class="flex items-center justify-between mb-2 ml-1">
             <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest">Password</label>
-            <button v-if="isLogin" type="button" class="text-xs font-medium text-purple-400 hover:text-purple-300 transition-colors">
-              Forgot password?
-            </button>
-          </div>
+        </div>
           <div class="relative group">
             <Icon name="lucide:lock" size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors" />
             <input 
@@ -163,16 +160,6 @@
         </button>
 
       </form>
-
-      <div class="mt-8 text-center text-sm text-slate-400">
-        {{ isLogin ? "Don't have an account?" : "Already have an account?" }}
-        <button 
-          @click="toggleMode" 
-          class="ml-1 font-bold text-white hover:text-purple-400 transition-colors focus:outline-none"
-        >
-          {{ isLogin ? 'Sign up for free' : 'Sign in instead' }}
-        </button>
-      </div>
 
     </div>
   </div>

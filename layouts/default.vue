@@ -4,7 +4,7 @@
     <div class="relative min-h-screen max-w-4xl mx-auto pb-24">
       <main class="p-4 sm:p-6">
         <slot />
-      <TestAuthWidget variant="bottom-right" />
+      <AuthWidgetA variant="bottom-right" />
       </main>
       <BottomNav />
     </div>
