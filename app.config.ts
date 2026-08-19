@@ -35,7 +35,9 @@ export default defineAppConfig({
       'view_reports',
       'view_call_center',
       'view_team',
-      'manage_team'
+      'manage_team',
+      'filter_leads',
+      'view_lead_totals',
     ],
     owner: [
       'view_projects', 
@@ -45,7 +47,9 @@ export default defineAppConfig({
       'view_call_center',
       'view_team',
       'manage_team',
-      'view_billing'
+      'view_billing',
+      'filter_leads',
+      'view_lead_totals',
     ]
   },
 

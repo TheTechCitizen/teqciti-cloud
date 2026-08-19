@@ -7,7 +7,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-05-15',
   devtools: { enabled: true },
   ssr: false,
-
+  
   vite: {
     server: {
       fs: {
@@ -28,7 +28,7 @@ extends: [
   ],
 
   site: {
-    url: "https://cloud.teqciti.com",
+    url: "https://cloudb.teqciti.com",
   },
 
   modules: ['@nuxt/eslint', 'nuxt-vue3-google-signin'],
@@ -38,6 +38,7 @@ extends: [
     public: {
       link: process.env.API_URL,
       cloudA: process.env.CLOUD_A,
+      streamCustomerSubdomain: 'customer-z4i7hrwnybqp6myv',
       devSystemToken: process.env.NODE_ENV === 'development' 
         ? process.env.API_TOKEN 
         : undefined,

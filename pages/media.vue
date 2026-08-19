@@ -8,21 +8,36 @@
         <p class="mt-2 text-sm text-slate-400">Review your upcoming schedules and access project assets.</p>
       </div>
 
-      <div class="flex p-1 space-x-1 rounded-xl bg-slate-800/50 ring-1 ring-slate-700/50 backdrop-blur-sm">
-        <button 
-          @click="activeTab = 'schedule'"
-          :class="['flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all', activeTab === 'schedule' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800']"
+      <div class="flex items-center gap-3">
+        <!-- NEW — manual refresh, same pattern as Action Center. This page has no live
+             update mechanism; a staffer publishing a new schedule or asset while a client
+             already has this page open otherwise wouldn't show up without a reload. -->
+        <button
+          @click="handleManualRefresh"
+          :disabled="isRefreshing"
+          aria-label="Check for updates"
+          class="inline-flex items-center gap-2 rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-medium text-slate-300 ring-1 ring-slate-700/50 hover:bg-slate-700 hover:text-white disabled:opacity-60 disabled:cursor-not-allowed transition-all shrink-0"
         >
-          <Icon name="lucide:calendar-clock" size="16" />
-          Content Schedule
+          <Icon name="lucide:refresh-cw" size="16" :class="{ 'animate-spin': isRefreshing }" />
+          {{ isRefreshing ? 'Checking...' : 'Check for updates' }}
         </button>
-        <button 
-          @click="activeTab = 'assets'"
-          :class="['flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all', activeTab === 'assets' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800']"
-        >
-          <Icon name="lucide:folder-open" size="16" />
-          Asset Library
-        </button>
+
+        <div class="flex p-1 space-x-1 rounded-xl bg-slate-800/50 ring-1 ring-slate-700/50 backdrop-blur-sm">
+          <button 
+            @click="activeTab = 'schedule'"
+            :class="['flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all', activeTab === 'schedule' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800']"
+          >
+            <Icon name="lucide:calendar-clock" size="16" />
+            Content Schedule
+          </button>
+          <button 
+            @click="activeTab = 'assets'"
+            :class="['flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all', activeTab === 'assets' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800']"
+          >
+            <Icon name="lucide:folder-open" size="16" />
+            Asset Library
+          </button>
+        </div>
       </div>
     </div>
 
@@ -94,7 +109,7 @@
                 post.status === 'flagged' ? 'ring-rose-500/40' : 'ring-slate-700/50 hover:ring-slate-500/50'
               ]"
             >
-              <!-- Background Media (Clickable to Expand - Removed Transformations) -->
+              <!-- Background Media (Clickable to Expand) -->
               <div 
                 class="absolute inset-0 bg-slate-900 cursor-pointer z-0" 
                 @click="viewMedia(post.mediaId, post.mediaType, post.status)"
@@ -104,12 +119,15 @@
                   :src="getAssetUrl(post.mediaId) || ''" 
                   class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" 
                 />
-                <video 
-                  v-else-if="post.mediaType === 'video' && post.mediaId" 
-                  :src="getAssetUrl(post.mediaId) || ''" 
+                <!-- FIXED: HLS (.m3u8) isn't natively playable in a plain <video> tag in
+                     most browsers — this was never going to work as a video element. This
+                     is a preview only (nothing here was ever actually playing), so a static
+                     thumbnail is not just a fix but genuinely simpler than what was here. -->
+                <img
+                  v-else-if="post.mediaType === 'video' && post.mediaId"
+                  :src="getVideoThumbnailUrl(post.mediaId)"
                   class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  preload="metadata" muted playsinline
-                ></video>
+                />
                 <div v-else class="h-full w-full flex items-center justify-center bg-slate-800">
                   <Icon name="lucide:image" size="32" class="text-slate-600" />
                 </div>
@@ -124,7 +142,7 @@
                 </div>
               </div>
               
-              <!-- Platform Icons (Now supports multiple via v-for) -->
+              <!-- Platform Icons -->
               <div class="absolute top-3 left-3 flex items-center -space-x-1.5 z-20 pointer-events-none">
                 <div 
                   v-for="platform in post.platforms" 
@@ -151,7 +169,6 @@
                   <p class="text-xs text-slate-300 line-clamp-2 leading-relaxed">{{ post.flagReason }}</p>
                 </div>
 
-                <!-- Less pronounced Flag Button -->
                 <button 
                   v-if="post.status === 'auto-approved'"
                   @click="openFlagModal(post)"
@@ -188,7 +205,7 @@
           @click="openLibrary(library)"
           class="group relative flex overflow-hidden rounded-2xl bg-slate-800/40 ring-1 ring-slate-700/50 backdrop-blur-sm transition-all hover:bg-slate-800 hover:ring-purple-500/50 cursor-pointer h-40"
         >
-          <!-- Folder Preview (Removed Transformations) -->
+          <!-- Folder Preview -->
           <div class="w-2/5 h-full bg-slate-900 relative shrink-0 border-r border-slate-700/50">
             <template v-if="library.assets[0]?.id">
               <img 
@@ -196,12 +213,13 @@
                 :src="getAssetUrl(library.assets[0].id) || ''" 
                 class="h-full w-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" 
               />
-              <video 
-                v-else-if="library.assets[0].type === 'video'" 
-                :src="getAssetUrl(library.assets[0].id) || ''" 
+              <!-- FIXED: same HLS-in-plain-video-tag issue as the schedule grid — static
+                   thumbnail, since this was only ever a preview, never real playback. -->
+              <img
+                v-else-if="library.assets[0].type === 'video'"
+                :src="getVideoThumbnailUrl(library.assets[0].id)"
                 class="h-full w-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500"
-                preload="metadata" muted playsinline
-              ></video>
+              />
               <div v-else class="h-full w-full flex items-center justify-center bg-slate-800"><Icon name="lucide:file-text" size="32" class="text-slate-600" /></div>
             </template>
             
@@ -238,10 +256,8 @@
     <Teleport to="body">
       <div v-if="expandedMedia" class="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-10 animate-in fade-in duration-200">
         
-        <!-- Background Overlay (Click to close) -->
         <div class="absolute inset-0 bg-slate-950/95 backdrop-blur-xl transition-opacity" @click="expandedMedia = null"></div>
         
-        <!-- NEW: Top Left Status Badge inside Lightbox -->
         <div v-if="expandedMedia.status === 'auto-approved'" class="fixed top-4 left-4 sm:top-8 sm:left-8 z-[210] flex items-center gap-2 rounded-full bg-emerald-500/90 px-4 py-2.5 text-sm font-bold text-white shadow-2xl backdrop-blur-md">
           <Icon name="lucide:check-circle-2" size="18" /> auto-approved
         </div>
@@ -249,25 +265,27 @@
           <Icon name="lucide:flag" size="18" /> Flagged
         </div>
 
-        <!-- UPGRADED: Highly Clickable Close Button -->
         <button @click="expandedMedia = null" class="fixed top-4 right-4 sm:top-8 sm:right-8 z-[210] flex h-12 w-12 items-center justify-center text-slate-300 hover:text-white bg-slate-800/80 hover:bg-rose-500/90 rounded-full transition-all backdrop-blur-md shadow-2xl hover:scale-105">
           <Icon name="lucide:x" size="24" />
         </button>
 
-        <!-- Media Container -->
         <div class="relative z-10 w-full h-full flex items-center justify-center pointer-events-none">
-          <!-- pointer-events-auto ensures the video controls work, but clicks outside the video pass through to the close background -->
           <img 
             v-if="expandedMedia.type === 'photo'" 
             :src="getAssetUrl(expandedMedia.id) || ''" 
             class="max-w-full max-h-full object-contain rounded-lg shadow-2xl pointer-events-auto" 
           />
-          <video 
-            v-else-if="expandedMedia.type === 'video'" 
-            :src="getAssetUrl(expandedMedia.id) || ''" 
-            class="max-w-full max-h-full rounded-lg shadow-2xl pointer-events-auto" 
-            controls autoplay playsinline
-          ></video>
+          <!-- FIXED: this is real playback (controls, autoplay), not a preview — so unlike
+               the thumbnail fixes elsewhere on this page, the fix here is Cloudflare's own
+               iframe player, which handles HLS compatibility internally across every
+               browser. A plain <video src="...m3u8"> was never going to work here either. -->
+          <iframe
+            v-else-if="expandedMedia.type === 'video'"
+            :src="getVideoIframeUrl(expandedMedia.id)"
+            class="max-w-full max-h-full aspect-video w-full sm:w-[80vw] rounded-lg shadow-2xl pointer-events-auto border-0"
+            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+            allowfullscreen
+          ></iframe>
         </div>
       </div>
     </Teleport>
@@ -332,7 +350,6 @@
           <div class="flex-1 overflow-y-auto p-6">
             <p class="text-sm text-slate-300 mb-6">{{ activeLibrary.description }}</p>
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              <!-- Clickable assets to expand in lightbox (Removed Transformations) -->
               <div 
                 v-for="asset in activeLibrary.assets" 
                 :key="asset.id" 
@@ -340,7 +357,8 @@
                 @click="viewMedia(asset.id, asset.type)"
               >
                 <img v-if="asset.type === 'photo'" :src="getAssetUrl(asset.id) || ''" class="h-full w-full object-cover transition-transform group-hover:scale-110" />
-                <video v-else-if="asset.type === 'video'" :src="getAssetUrl(asset.id) || ''" class="h-full w-full object-cover transition-transform group-hover:scale-110" preload="metadata" muted playsinline></video>
+                <!-- FIXED: same preview-not-playback fix as the other two grid contexts. -->
+                <img v-else-if="asset.type === 'video'" :src="getVideoThumbnailUrl(asset.id)" class="h-full w-full object-cover transition-transform group-hover:scale-110" />
                 <div v-else class="h-full w-full flex items-center justify-center"><Icon name="lucide:file-text" size="48" class="text-slate-600" /></div>
                 
                 <div v-if="asset.type === 'video'" class="absolute inset-0 flex items-center justify-center bg-slate-950/20 pointer-events-none">
@@ -349,9 +367,15 @@
                   </div>
                 </div>
 
-                <!-- Hover Actions (Download) - Used @click.stop to prevent lightbox opening when downloading -->
+                <!-- Hover Actions (Download) -->
+                <!-- CHANGED: download is only offered for photo/document assets (real Directus
+                     files). A video asset's id here is a Stream uid, not a Directus file —
+                     there's no confirmed, working "download this Stream video" mechanism in
+                     this system, so this is hidden for videos rather than shown as a broken
+                     link. If Stream's own MP4-download feature is enabled for your account
+                     later, this can be wired to that specifically. -->
                 <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 to-transparent opacity-0 transition-opacity group-hover:opacity-100 flex flex-col justify-end p-3">
-                  <a v-if="activeLibrary.downloadApproved" :href="getAssetUrl(asset.id, { download: true }) || '#'" target="_blank" @click.stop class="flex w-full items-center justify-center gap-2 rounded-md bg-purple-600/90 py-1.5 text-xs font-semibold text-white hover:bg-purple-500">
+                  <a v-if="activeLibrary.downloadApproved && asset.type !== 'video'" :href="getAssetUrl(asset.id, { download: true }) || '#'" target="_blank" @click.stop class="flex w-full items-center justify-center gap-2 rounded-md bg-purple-600/90 py-1.5 text-xs font-semibold text-white hover:bg-purple-500">
                     <Icon name="lucide:download" size="14" /> Download
                   </a>
                 </div>
@@ -371,10 +395,10 @@ definePageMeta({
   requiresAuth: true
 });
 
-
 const { orgId, contentUpdateDay } = await useCurrentOrg();
 
 const { getAssetUrl } = await useAsset();
+const { show } = useNotifications();
 
 const { 
   activeSchedules,
@@ -382,7 +406,9 @@ const {
   pending, 
   isFlagging, 
   flagPost, 
-  refreshMedia 
+  refreshMedia,
+  getVideoThumbnailUrl,
+  getVideoIframeUrl,
 } = await useMediaHub(orgId.value);
 
 watch(orgId, async (newId) => {
@@ -398,7 +424,6 @@ const flaggingPost = ref<any>(null);
 const revisionText = ref('');
 const activeLibrary = ref<any>(null);
 
-// New Lightbox State
 const expandedMedia = ref<{ id: string, type: 'photo' | 'video', status?: string } | null>(null);
 
 const viewMedia = (id: string | null, type: string, status?: string) => {
@@ -406,7 +431,7 @@ const viewMedia = (id: string | null, type: string, status?: string) => {
   expandedMedia.value = { 
     id, 
     type: type as 'photo' | 'video',
-    status // Pass the status to the lightbox
+    status
   };
 };
 
@@ -430,10 +455,44 @@ const openLibrary = (library: any) => {
 
 const downloadCollection = (library: any) => {
   if (!library.downloadApproved) return;
-  library.assets.forEach((asset: any) => {
+  // Video assets skipped for the same reason as the individual download link above — no
+  // confirmed Stream download mechanism, and getAssetUrl would build a broken URL for one.
+  library.assets.filter((a: any) => a.type !== 'video').forEach((asset: any) => {
     const url = getAssetUrl(asset.id, { download: true });
     if (url) window.open(url, '_blank');
   });
+};
+
+// NEW — manual refresh, same pattern as Action Center. Compares total post count (across
+// all schedules) and total asset count (across all libraries) before/after, so the
+// confirmation actually says something rather than a bare "refreshed."
+const isRefreshing = ref(false);
+
+const handleManualRefresh = async () => {
+  if (isRefreshing.value) return;
+  isRefreshing.value = true;
+
+  const postsBefore = activeSchedules.value.reduce((sum: number, s: any) => sum + s.posts.length, 0);
+  const assetsBefore = assetLibraries.value.reduce((sum: number, l: any) => sum + l.assets.length, 0);
+
+  await refreshMedia();
+
+  const postsAfter = activeSchedules.value.reduce((sum: number, s: any) => sum + s.posts.length, 0);
+  const assetsAfter = assetLibraries.value.reduce((sum: number, l: any) => sum + l.assets.length, 0);
+  isRefreshing.value = false;
+
+  const newPosts = postsAfter - postsBefore;
+  const newAssets = assetsAfter - assetsBefore;
+
+  if (newPosts > 0 && newAssets > 0) {
+    show({ title: 'New content', message: `${newPosts} new post${newPosts === 1 ? '' : 's'} and ${newAssets} new asset${newAssets === 1 ? '' : 's'}.`, type: 'info', showInTray: true });
+  } else if (newPosts > 0) {
+    show({ title: 'New posts added', message: `${newPosts} new post${newPosts === 1 ? '' : 's'} to review.`, type: 'info', showInTray: true });
+  } else if (newAssets > 0) {
+    show({ title: 'New assets added', message: `${newAssets} new asset${newAssets === 1 ? '' : 's'} available.`, type: 'info', showInTray: true });
+  } else {
+    show({ title: "You're all caught up", message: 'No new content right now.', type: 'success', showInTray: false });
+  }
 };
 
 const getPlatformIcon = (platform: string) => {

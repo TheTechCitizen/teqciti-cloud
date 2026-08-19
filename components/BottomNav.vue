@@ -63,6 +63,7 @@ const rawNavItems = [
   { path: '/action-center', icon: 'lucide:alarm-clock', label: 'Action Center' },
   { path: '/lead-center', icon: 'lucide:user-star', label: 'Lead Center' },
   { path: '/call-center', icon: 'lucide:headphones', label: 'Call Center', capability: 'view_call_center' },
+  { path: '/live', icon: 'lucide:headphones', label: 'Live' },
   { path: '/reports', icon: 'lucide:bar-chart-3', label: 'Reports', capability: 'view_reports' },
   { path: '/settings', icon: 'lucide:package-search', label: 'Office' },
 ];

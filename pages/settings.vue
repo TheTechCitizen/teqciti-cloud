@@ -29,22 +29,22 @@
 
     <div class="flex flex-col md:flex-row gap-8 items-start">
       
-      <aside class="w-full md:w-64 shrink-0 space-y-1">
-        <button 
-          v-for="tab in visibleTabs" 
-          :key="tab.id"
-          @click="activeTab = tab.id"
-          :class="[
-            'w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all',
-            activeTab === tab.id ? 'bg-slate-800 text-white shadow-sm ring-1 ring-slate-700/50' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-          ]"
-        >
-          <Icon :name="tab.icon" size="18" :class="activeTab === tab.id ? 'text-purple-400' : ''" />
-          {{ tab.name }}
-        </button>
-      </aside>
+    <aside class="w-full md:w-64 shrink-0 flex flex-wrap md:flex-col gap-2 md:gap-0 md:space-y-1">
+  <button 
+    v-for="tab in visibleTabs" 
+    :key="tab.id"
+    @click="activeTab = tab.id"
+    :class="[
+      'grow md:grow-0 md:w-full flex items-center justify-center md:justify-start gap-2 md:gap-3 px-4 py-2.5 md:py-3 text-sm font-medium rounded-xl transition-all',
+      activeTab === tab.id ? 'bg-slate-800 text-white shadow-sm ring-1 ring-slate-700/50' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+    ]"
+  >
+    <Icon :name="tab.icon" size="18" :class="activeTab === tab.id ? 'text-purple-400' : ''" />
+    <span class="whitespace-nowrap">{{ tab.name }}</span>
+  </button>
+</aside>      
 
-      <main class="flex-1 w-full min-w-0 space-y-6">
+<main class="flex-1 w-full min-w-0 space-y-6">
         
           <section v-if="activeTab === 'org'" class="animate-in fade-in duration-300 space-y-6">
               <div class="rounded-2xl bg-slate-800/40 p-6 sm:p-8 ring-1 ring-slate-700/50 backdrop-blur-sm relative overflow-hidden">
@@ -105,17 +105,13 @@
 
   </section>
 
-  <!--
-
-<section v-if="activeTab === 'team' && can('view_team')" class="animate-in fade-in duration-300 space-y-6">
+  <section v-if="activeTab === 'team' && can('view_team')" class="animate-in fade-in duration-300 space-y-6">
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
       <h2 class="text-xl font-bold text-white">Team Members</h2>
       <p class="text-sm text-slate-400 mt-1">Manage who has access to this workspace.</p>
     </div>
-  -->
     
-    <!--
     <button 
       v-if="can('manage_team')"
       @click="showAddUserModal = true"
@@ -124,80 +120,263 @@
       <Icon name="lucide:user-plus" size="16" />
       Add User
     </button>
-    -->
-    <!--
   </div>
 
-  <div class="rounded-2xl bg-slate-800/40 ring-1 ring-slate-700/50 backdrop-blur-sm overflow-hidden">
+  <div v-if="isLoading" class="p-12 text-center text-slate-400">
+    <Icon name="lucide:loader-2" class="animate-spin mx-auto h-8 w-8 text-purple-500 mb-2" />
+    <p>Loading workspace team members...</p>
+  </div>
+
+<div v-else class="rounded-2xl bg-slate-800/40 ring-1 ring-slate-700/50 backdrop-blur-sm">
     <div class="divide-y divide-slate-700/50">
       
-      <div v-if="!currentOrg?.clientUser?.length" class="p-8 text-center text-slate-400">
+      <div v-if="!teamMembers?.length" class="p-8 text-center text-slate-400">
         No team members found.
       </div>
       
-      <div v-else v-for="member in currentOrg.clientUser" :key="member.id" class="flex items-center justify-between p-5 hover:bg-slate-800/60 transition-colors">
+      <div v-else v-for="member in teamMembers" :key="member.id" class="flex items-center justify-between p-5 hover:bg-slate-800/60 transition-colors first:rounded-t-2xl last:rounded-b-2xl">
         <div class="flex items-center gap-4">
           
           <img 
-            v-if="member.user.avatar" 
-            src="/img/illustrations/1.png" 
+            v-if="member.avatar" 
+            :src="member.avatar" 
             class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-700 object-cover ring-1 ring-slate-600" 
             alt="User Avatar"
           />
           <div v-else class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-700 ring-1 ring-slate-600 text-white font-bold uppercase">
-            {{ member.user.firstName.charAt(0) }}
+            {{ member.firstName?.charAt(0) || 'U' }}
           </div>
           
           <div>
             <div class="flex items-center gap-2">
               <p class="text-sm font-bold text-white max-w-[150px] sm:max-w-xs truncate">
-                {{ member.user.firstName }} {{ member.user.lastName }}
+                {{ member.firstName }} {{ member.lastName }}
               </p>
               
-              <span v-if="member.user.id === user?.id" class="rounded bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-bold text-blue-400 ring-1 ring-inset ring-blue-500/20">
+              <span v-if="member.userId === user?.id" class="rounded bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-bold text-blue-400 ring-1 ring-inset ring-blue-500/20">
                 You
               </span>
 
               <span 
                 class="rounded px-1.5 py-0.5 text-[10px] font-bold ring-1 ring-inset"
                 :class="{
-                  'bg-amber-500/10 text-amber-400 ring-amber-500/20': member.orgRole === 'Owner',
-                  'bg-purple-500/10 text-purple-400 ring-purple-500/20': member.orgRole === 'Admin',
-                  'bg-slate-700 text-slate-300 ring-slate-600': member.orgRole === 'Member'
+                  'bg-amber-500/10 text-amber-400 ring-amber-500/20': member.role === 'Owner',
+                  'bg-purple-500/10 text-purple-400 ring-purple-500/20': member.role === 'Admin',
+                  'bg-slate-700 text-slate-300 ring-slate-600': member.role === 'Member'
                 }"
               >
-                {{ member.orgRole }}
+                {{ member.role }}
               </span>
             </div>
             
             <div class="flex items-center gap-2 text-xs text-slate-400 mt-1">
-              <span class="truncate">{{ member.user.email }}</span>
+              <span class="truncate">{{ member.email }}</span>
             </div>
           </div>
         </div>
 
-        <div class="flex items-center gap-4 text-right">
-          <button 
-            v-if="canEdit && member.orgRole !== 'Owner' && member.user.id !== user?.id" 
-            @click="removeTeamMember(member.id)"
-            :disabled="isRemovingId === member.id"
-            class="text-slate-500 hover:text-rose-400 transition-colors p-2 rounded-lg hover:bg-rose-500/10 disabled:opacity-50"
-            title="Remove from Workspace"
-          >
-            <Icon v-if="isRemovingId === member.id" name="lucide:loader-2" class="animate-spin" size="18" />
-            <Icon v-else name="lucide:user-minus" size="18" />
-          </button>
-        </div>
-        -->
-        <!--
+     <div v-if="can('manage_team') && member.role !== 'Owner' && member.userId !== user?.id" class="flex items-center gap-1 relative">
+          
+  <button 
+    @click="triggerRemoveMember(member.id, `${member.firstName} ${member.lastName}`)"
+    :disabled="isRemoving"
+    class="text-slate-500 hover:text-rose-400 transition-colors p-2 rounded-lg hover:bg-rose-500/10 disabled:opacity-50"
+    title="Revoke Access"
+  >
+    <Icon name="lucide:user-minus" size="18" />
+  </button>
+
+  <div class="relative menu-container">
+    <button 
+      @click.stop="toggleMenu(member.id)"
+      class="text-slate-500 hover:text-white transition-colors p-2 rounded-lg hover:bg-slate-700/50"
+      :class="{ 'bg-slate-700/50 text-white': activeMenuId === member.id }"
+    >
+      <Icon name="lucide:more-vertical" size="18" />
+    </button>
+    
+    <div 
+      v-if="activeMenuId === member.id"
+      class="absolute right-0 top-full mt-1 w-48 bg-slate-900 border border-slate-700/70 rounded-xl shadow-2xl z-30 p-1.5 animate-in fade-in zoom-in-95 duration-150"
+    >
+      <button 
+        @click="triggerPasswordReset(member.userId, `${member.firstName} ${member.lastName}`); activeMenuId = null"
+        class="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+      >
+        <Icon name="lucide:key-round" size="14" class="text-cyan-400" />
+        Reset System Password
+      </button>
+      
+      <button 
+        @click="handleUpdateRole(member.id, member.role); activeMenuId = null"
+        class="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 rounded-lg transition-colors border-t border-slate-800 mt-1 pt-2"
+      >
+        <Icon name="lucide:shield-alert" size="14" />
+        Toggle to {{ member.role === 'Admin' ? 'Member' : 'Admin' }}
+      </button>
+    </div>
+  </div>
+
+</div>
       </div>
 
     </div>
   </div>
+
+  <div v-if="showAddUserModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="relative w-full max-w-md rounded-2xl bg-slate-900 border border-slate-800 p-6 shadow-xl">
+      <h3 class="text-lg font-bold text-white mb-2">Add New Team Member</h3>
+      <p class="text-xs text-slate-400 mb-6">Creates account immediately. They will access the workspace using your organization's shared default credentials.</p>
+
+      <form @submit.prevent="handleAddUser" class="space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">First Name</label>
+            <input 
+              v-model="newUser.firstName"
+              type="text" 
+              placeholder="Jane"
+              class="w-full rounded-xl border-0 bg-slate-950 py-2.5 px-4 text-sm text-white ring-1 ring-inset ring-slate-700 placeholder:text-slate-600 focus:ring-2 focus:ring-purple-500" 
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Last Name</label>
+            <input 
+              v-model="newUser.lastName"
+              type="text" 
+              placeholder="Doe"
+              class="w-full rounded-xl border-0 bg-slate-950 py-2.5 px-4 text-sm text-white ring-1 ring-inset ring-slate-700 placeholder:text-slate-600 focus:ring-2 focus:ring-purple-500" 
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Email Address <span class="text-rose-500">*</span></label>
+          <input 
+            v-model="newUser.email"
+            type="email" 
+            required
+            placeholder="jane.doe@company.com"
+            class="w-full rounded-xl border-0 bg-slate-950 py-2.5 px-4 text-sm text-white ring-1 ring-inset ring-slate-700 placeholder:text-slate-600 focus:ring-2 focus:ring-purple-500" 
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Role Type <span class="text-rose-500">*</span></label>
+          <select 
+            v-model="newUser.role"
+            class="w-full rounded-xl border-0 bg-slate-950 py-2.5 px-4 text-sm text-white ring-1 ring-inset ring-slate-700 focus:ring-2 focus:ring-purple-500 appearance-none"
+          >
+            <option value="Member">Member (Standard Operations)</option>
+            <option value="Admin">Admin (Privileged Operations)</option>
+          </select>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
+          <button 
+            type="button" 
+            @click="showAddUserModal = false"
+            class="px-4 py-2 rounded-lg text-slate-400 hover:text-white text-sm font-medium transition-colors"
+          >
+            Cancel
+          </button>
+          <button 
+            type="submit" 
+            :disabled="isInviting"
+            class="flex items-center gap-2 px-5 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 disabled:bg-purple-800 text-white text-sm font-semibold transition-colors shadow-lg shadow-purple-600/20"
+          >
+            <Icon v-if="isInviting" name="lucide:loader-2" class="animate-spin" size="16" />
+            Add Member
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div v-if="showRemoveModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+  <div class="relative w-full max-w-sm rounded-2xl bg-slate-900 border border-slate-800 p-6 shadow-xl text-center">
+    
+    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-rose-500/10 mb-4 ring-8 ring-slate-900">
+      <Icon name="lucide:user-x" size="24" class="text-rose-500" />
+    </div>
+
+    <h3 class="text-lg font-bold text-white mb-2">Remove Team Member?</h3>
+    <p class="text-sm text-slate-400 mb-6 leading-relaxed">
+      Are you sure you want to remove <strong class="text-white">{{ selectedRemoveUser?.name }}</strong> from this workspace? They will immediately lose access to all associated projects and resources.
+    </p>
+
+    <div class="flex items-center justify-center gap-3">
+      <button 
+        @click="showRemoveModal = false"
+        class="flex-1 px-4 py-2.5 rounded-xl text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 text-sm font-medium transition-colors"
+        :disabled="isRemoving"
+      >
+        Cancel
+      </button>
+      <button 
+        @click="confirmRemoveMember" 
+        :disabled="isRemoving"
+        class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:bg-rose-800 text-white text-sm font-semibold transition-colors shadow-lg shadow-rose-600/20"
+      >
+        <Icon v-if="isRemoving" name="lucide:loader-2" class="animate-spin" size="16" />
+        Yes, Remove
+      </button>
+    </div>
+    
+  </div>
+</div>
+
+  <div v-if="showResetPasswordModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="relative w-full max-w-md rounded-2xl bg-slate-900 border border-slate-800 p-6 shadow-xl">
+      <h3 class="text-lg font-bold text-white mb-2">Reset User Password</h3>
+      
+      <div v-if="!tempDefaultPassword" class="space-y-4">
+        <p class="text-sm text-slate-300">
+          Are you sure you want to alter security authorization and reset credentials for <strong>{{ selectedResetUser?.name }}</strong>
+        </p>
+        <div class="flex justify-end gap-3 pt-4">
+          <button 
+            @click="showResetPasswordModal = false"
+            class="px-4 py-2 rounded-lg text-slate-400 hover:text-white text-sm font-medium transition-colors"
+          >
+            Cancel
+          </button>
+          <button 
+            @click="handleConfirmPasswordReset" 
+            :disabled="isResettingPassword"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:bg-cyan-800 text-white text-sm font-semibold transition-colors"
+          >
+            <Icon v-if="isResettingPassword" name="lucide:loader-2" class="animate-spin" size="16" />
+            Confirm Override
+          </button>
+        </div>
+      </div>
+
+      <div v-else class="space-y-4">
+        <div class="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-4 text-emerald-400 text-sm flex gap-3 items-start">
+          <Icon name="lucide:check-circle" size="20" class="shrink-0 mt-0.5" />
+          <div>
+            <span class="font-bold">Password Overridden!</span> Please manually copy and relay this temporary fallback credential securely to the user.
+          </div>
+        </div>
+
+        <div class="bg-slate-950 rounded-xl p-3.5 border border-slate-800 text-center select-all">
+          <span class="text-[10px] text-slate-500 block uppercase font-mono tracking-wider mb-1">Temporary System Password</span>
+          <span class="text-lg font-mono text-cyan-400 font-bold tracking-wide">{{ tempDefaultPassword }}</span>
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <button 
+            @click="showResetPasswordModal = false"
+            class="px-5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium transition-colors"
+          >
+            Close Panel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
-
-        -->
-
 
 
        <section v-if="activeTab === 'security'" class="animate-in fade-in duration-300 space-y-6">
@@ -333,54 +512,9 @@
       </main>
     </div>
 
-
+    
     <TSupportModalD v-if="currentOrg" :organizationId="currentOrg.id" />
 
-
-    <div v-if="showAddUserModal" class="fixed inset-0 z-30 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity" @click="showAddUserModal = false"></div>
-      
-      <div class="relative w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-slate-900 ring-1 ring-slate-700 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-full sm:zoom-in-95 duration-300">
-        <div class="flex items-center justify-between border-b border-slate-700/50 bg-slate-800/90 px-6 py-4 backdrop-blur-md">
-          <h3 class="text-lg font-bold text-white flex items-center gap-2">
-            <Icon name="lucide:user-plus" size="18" class="text-purple-400" />
-            Invite Team Member
-          </h3>
-          <button @click="showAddUserModal = false" class="text-slate-400 hover:text-white transition-colors">
-            <Icon name="lucide:x" size="20" />
-          </button>
-        </div>
-
-        <div class="p-6 space-y-5">
-          <div>
-            <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Display Name</label>
-            <input type="text" placeholder="e.g. Jane Doe" class="w-full rounded-xl border-0 bg-slate-950 py-3 px-4 text-sm text-white ring-1 ring-inset ring-slate-700 placeholder:text-slate-600 focus:ring-2 focus:ring-purple-500" />
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Email or Username</label>
-            <input type="text" placeholder="e.g. reception@domain.com or jane_r" class="w-full rounded-xl border-0 bg-slate-950 py-3 px-4 text-sm text-white ring-1 ring-inset ring-slate-700 placeholder:text-slate-600 focus:ring-2 focus:ring-purple-500" />
-            <p class="mt-1.5 text-[10px] text-slate-500">This connects their actions to task tracking and lead attributions.</p>
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Department</label>
-            <select class="w-full rounded-xl border-0 bg-slate-950 py-3 px-4 text-sm text-white ring-1 ring-inset ring-slate-700 focus:ring-2 focus:ring-purple-500 appearance-none">
-              <option value="reception">Reception / Front Desk</option>
-              <option value="marketing">Marketing</option>
-              <option value="management">Management</option>
-              <option value="clinical">Clinical Staff</option>
-            </select>
-          </div>
-
-          <div class="pt-2">
-            <button @click="showAddUserModal = false" class="w-full rounded-xl bg-purple-600 px-4 py-3 text-sm font-semibold text-white shadow-lg hover:bg-purple-500 transition-all">
-              Send Invite
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
 
   </div>
 </template>
@@ -396,7 +530,22 @@ const { user, changePassword } = useAuth();
 
 const { can } = usePermissions();
 
+const { show: showNotification } = useNotifications();
+
 const { currentOrg, orgName, myOrgRole, contactPerson, accountManager, address, phone, email, logoReference, pending } = await useCurrentOrg();
+
+const {
+  teamMembers,
+  isLoading,
+  isInviting,
+  isRemoving,
+  isResettingPassword,
+  addTeamMember,
+  removeTeamMember,
+  resetTeamMemberPassword,
+  updateTeamMemberRole,
+} = await useTeamManagement(currentOrg.value?.id);
+
 
 // --- STATE: NAVIGATION ---
 const rawTabs = [
@@ -423,15 +572,158 @@ const visibleTabs = computed(() => {
 // Set the default active tab to the first visible one
 const activeTab = ref(visibleTabs.value[0]?.id || 'org');
 
-// --- STATE: DATA ---
-const showAddUserModal = ref(false)
-
 
 const manager = ref([
   { id: 'a', name: 'Eve', phone: '0740761950' }
 ])
 
 
+
+// --- MENU: TEAM ---
+// 2. Modals UI State
+const showAddUserModal = ref(false);
+const showResetPasswordModal = ref(false);
+const showRemoveModal = ref(false);
+const selectedRemoveUser = ref<{ id: string; name: string } | null>(null);
+
+// 3. Form State for Adding User
+const newUser = ref({
+  email: '',
+  role: 'Member', // Default role
+  firstName: '',
+  lastName: '',
+});
+
+// For the hover menu for resetting password
+const activeMenuId = ref<string | null>(null);
+
+const toggleMenu = (memberId: string) => {
+  if (activeMenuId.value === memberId) {
+    activeMenuId.value = null;
+  } else {
+    activeMenuId.value = memberId;
+  }
+};
+
+// Optional: Close menu when clicking anywhere else
+if (import.meta.client) {
+  window.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (!target.closest('.menu-container')) {
+      activeMenuId.value = null;
+    }
+  });
+}
+
+// 4. State for Password Reset Modal Interaction
+const selectedResetUser = ref<{ id: string; name: string } | null>(null);
+const tempDefaultPassword = ref<string | null>(null);
+
+// 5. Handlers
+const handleAddUser = async () => {
+  if (!newUser.value.email.trim()) return;
+  
+  const success = await addTeamMember(
+    newUser.value.email,
+    newUser.value.role,
+    newUser.value.firstName,
+    newUser.value.lastName
+  );
+
+  if (success) {
+    showNotification({
+      title: "User Added",
+      message: `${newUser.value.email} has been successfully added to the team.`,
+      type: "success"
+    });
+    // Reset Form
+    newUser.value = { email: '', role: 'Member', firstName: '', lastName: '' };
+    showAddUserModal.value = false;
+  } else {
+    showNotification({
+      title: "Error",
+      message: "Failed to add team member. Please verify your permissions and try again.",
+      type: "error"
+    });
+  }
+};
+
+const handleUpdateRole = async (junctionId: string, currentRole: string) => {
+  const nextRole = currentRole === 'Admin' ? 'Member' : 'Admin';
+  const success = await updateTeamMemberRole(junctionId, nextRole);
+
+  if (success) {
+    showNotification({
+      title: "Role Updated",
+      message: `User role has been updated to ${nextRole}.`,
+      type: "success"
+    });
+  } else {
+    showNotification({
+      title: "Update Failed",
+      message: "Could not update user role.",
+      type: "error"
+    });
+  }
+};
+
+const triggerRemoveMember = (junctionId: string, name: string) => {
+  selectedRemoveUser.value = { id: junctionId, name };
+  showRemoveModal.value = true;
+};
+
+// 2. Confirm and execute the removal
+const confirmRemoveMember = async () => {
+  if (!selectedRemoveUser.value) return;
+
+  const success = await removeTeamMember(selectedRemoveUser.value.id);
+  if (success) {
+    showNotification({
+      title: "Member Removed",
+      message: `${selectedRemoveUser.value.name} has been removed from the team.`,
+      type: "success"
+    });
+    // Reset and close
+    showRemoveModal.value = false;
+    selectedRemoveUser.value = null;
+  } else {
+    showNotification({
+      title: "Error",
+      message: "Could not remove member from this workspace.",
+      type: "error"
+    });
+  }
+};
+
+const triggerPasswordReset = (userId: string, name: string) => {
+  selectedResetUser.value = { id: userId, name };
+  tempDefaultPassword.value = null;
+  showResetPasswordModal.value = true;
+};
+
+const handleConfirmPasswordReset = async () => {
+  if (!selectedResetUser.value) return;
+
+  const password = await resetTeamMemberPassword(selectedResetUser.value.id);
+  if (password) {
+    tempDefaultPassword.value = password;
+    showNotification({
+      title: "Password Reset Success",
+      message: `Password reset successfully for ${selectedResetUser.value.name}.`,
+      type: "success"
+    });
+  } else {
+    showNotification({
+      title: "Reset Failed",
+      message: "Could not reset user's password.",
+      type: "error"
+    });
+  }
+};
+
+
+
+// --- MENU: NOTIFICATIONS AND PREFERENCES ---
 // 1. Define the configuration for your Notifications block
 const notificationSettings = {
   projectUpdates: {
@@ -460,38 +752,11 @@ const displaySettings = {
   }
 };
 
-// --- REMOVE MEMBER LOGIC ---
-const isRemovingId = ref<string | null>(null);
 
-const removeMember = async (junctionId: string) => {
-  if (!confirm('Remove this user from the workspace?')) return;
-  if (!currentOrg.value?.id) return;
 
-  isRemovingId.value = junctionId;
 
-  try {
-    const orgService = useDataService('org');
-    
-    // We update the organization and tell Directus to sever this specific bridge ID
-    await orgService.update(currentOrg.value.id, {
-      client_users: {
-        delete: [junctionId] 
-      }
-    });
-
-    // Sync the global memory so the row instantly disappears
-    await refresh();
-    
-  } catch (error) {
-    console.error("Failed to remove user", error);
-  } finally {
-    isRemovingId.value = null;
-  }
-};
-
-// 1. Changing Password Logic
-
-// Form State
+// --- MENU: SECURITY MENU ---
+// Security Menu - Password Update
 const newPassword = ref('');
 const isUpdatingPassword = ref(false);
 const passwordMessage = ref<{ type: 'success' | 'error', text: string } | null>(null);

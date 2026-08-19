@@ -8,8 +8,9 @@
       </div>
     </div>
 
+    <!-- METRICS GRID -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="rounded-2xl bg-slate-800/40 p-5 ring-1 ring-slate-700/50 backdrop-blur-sm">
+      <div v-if="can('view_lead_totals')" class="rounded-2xl bg-slate-800/40 p-5 ring-1 ring-slate-700/50 backdrop-blur-sm">
         <p class="text-sm font-medium text-slate-400 mb-2">Total Bookings (30 Days)</p>
         <div v-if="pending" class="h-8 w-16 animate-pulse rounded bg-slate-700/50"></div>
         <p v-else class="text-3xl font-bold text-white">{{ totalLeads30Days }}</p>
@@ -59,7 +60,8 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+    <!-- QUALIFIED LEADS BANNER -->
+    <div v-if="can('view_lead_totals')" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
       <div class="relative group overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-500/20 to-purple-500/20 p-[1px]">
         <div class="relative flex items-center justify-between bg-slate-900 rounded-xl px-5 py-3 h-20">
           <div class="flex items-center gap-4">
@@ -77,7 +79,10 @@
       </div>
     </div>
 
-    <div class="border-b border-slate-700/50 pb-4">
+    <!-- TABLE HEADER -->
+    <!-- TABLE HEADER WITH FILTER TRIGGER -->
+    <div class="border-b border-slate-700/50 pb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div>
         <h2 class="text-xl font-bold text-white flex items-center gap-2">
           <Icon name="lucide:target" size="20" class="text-purple-400" />
           Qualified Bookings
@@ -85,8 +90,214 @@
         <p class="mt-1 text-sm text-slate-400 max-w-3xl leading-relaxed">
           These are high-intent contacts who have explicitly submitted a form with the intent to book or manually assisted by our team to book. Use the table below to track follow-ups and ensure no opportunity slips through the cracks.
         </p>
+      </div>
+
+      <!-- Filter Toggle Trigger Button -->
+      <button 
+        v-if="can('filter_leads')" 
+        @click="showFilterBar = !showFilterBar"
+        :class="[
+          'relative flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-300 shrink-0 shadow-lg',
+          showFilterBar || activeFilterCount > 0 ? 'bg-indigo-600 text-white shadow-indigo-500/20' : 'bg-slate-800 text-slate-300 ring-1 ring-slate-700 hover:bg-slate-700 hover:text-white'
+        ]"
+      >
+        <Icon name="lucide:filter" size="14" />
+        <span>{{ showFilterBar ? 'Hide Filters' : 'Filter Leads' }}</span>
+        <span v-if="activeFilterCount > 0" class="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 text-[10px] font-bold text-white">
+          {{ activeFilterCount }}
+        </span>
+      </button>
     </div>
 
+    <!-- ========================================== -->
+    <!-- POPUP FILTER DOCK & ADVANCED PANEL -->
+    <!-- ========================================== -->
+    <Transition name="slide-fade">
+      <div v-if="showFilterBar" class="flex flex-col gap-2">
+        
+        <!-- Primary Dock -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-900/90 p-1.5 rounded-2xl ring-1 ring-slate-700/50 backdrop-blur-xl shadow-2xl shadow-black/50">
+          
+          <div class="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+            <!-- Minimal Search Pill -->
+            <div class="relative w-full sm:w-64 group">
+              <Icon name="lucide:search" size="14" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-purple-400 transition-colors" />
+              <input 
+                v-model="filters.search" 
+                type="text" 
+                placeholder="Search leads..." 
+                class="w-full bg-slate-800/50 hover:bg-slate-800 rounded-xl pl-9 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:bg-slate-800 focus:ring-1 focus:ring-purple-500/50 outline-none transition-all border-none shadow-inner"
+              />
+            </div>
+            
+            <!-- Action Toggle Pills & Advanced Button -->
+            <div class="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto px-1 sm:px-0 scrollbar-hide py-1 sm:py-0">
+              
+              <button 
+                @click="filters.contacted = filters.contacted === false ? null : false"
+                :class="[
+                  'px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-300 whitespace-nowrap', 
+                  filters.contacted === false ? 'bg-purple-500/20 text-purple-300 shadow-[inset_0_0_0_1px_rgba(168,85,247,0.4)]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                ]"
+              >
+                Uncontacted
+              </button>
+              
+              <button 
+                @click="filters.needsFollowUp = filters.needsFollowUp === true ? null : true"
+                :class="[
+                  'px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-300 whitespace-nowrap flex items-center gap-1.5', 
+                  filters.needsFollowUp === true ? 'bg-amber-500/20 text-amber-300 shadow-[inset_0_0_0_1px_rgba(245,158,11,0.4)]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                ]"
+              >
+                Needs Follow-up
+              </button>
+
+              <button 
+                @click="filters.firstVisit = filters.firstVisit === true ? null : true"
+                :class="[
+                  'px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-300 whitespace-nowrap', 
+                  filters.firstVisit === true ? 'bg-emerald-500/20 text-emerald-300 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.4)]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                ]"
+              >
+                New Clients
+              </button>
+
+              <!-- Divider -->
+              <div class="w-px h-4 bg-slate-700/50 mx-1"></div>
+
+              <!-- Advanced Filters Toggle -->
+              <button 
+                @click="showAdvancedFilters = !showAdvancedFilters"
+                :class="[
+                  'relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-300 whitespace-nowrap',
+                  showAdvancedFilters ? 'bg-indigo-500/20 text-indigo-300 shadow-[inset_0_0_0_1px_rgba(99,102,241,0.4)]' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                ]"
+              >
+                <Icon name="lucide:sliders-horizontal" size="14" />
+                More Filters
+              </button>
+
+            </div>
+          </div>
+
+          <!-- Stealthy Export Button -->
+          <div class="flex items-center sm:pr-2 w-full sm:w-auto justify-end sm:border-l border-slate-700/30">
+            <button 
+              @click="exportLeadsToCsv"
+              :disabled="isExporting"
+              class="group flex items-center gap-0 px-2 py-1.5 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-all outline-none focus:ring-1 focus:ring-slate-600 active:scale-95 disabled:opacity-50 overflow-hidden"
+            >
+              <Icon :name="isExporting ? 'lucide:loader-2' : 'lucide:download'" size="16" :class="isExporting ? 'animate-spin text-purple-400' : 'group-hover:-translate-y-0.5 transition-transform duration-300'" />
+              <span class="max-w-0 opacity-0 group-hover:max-w-xs group-hover:opacity-100 group-hover:ml-1.5 transition-all duration-300 ease-in-out whitespace-nowrap">
+                Export CSV
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Advanced Filters Dropdown Panel -->
+        <Transition name="slide-fade">
+          <div v-if="showAdvancedFilters" class="bg-slate-900/90 p-5 rounded-2xl ring-1 ring-slate-700/50 backdrop-blur-2xl shadow-xl border border-slate-800">
+            <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                <Icon name="lucide:list-filter" size="14" class="text-indigo-400"/>
+                Advanced Filtering
+              </h3>
+              <button 
+                v-if="activeFilterCount > 0"
+                @click="clearFilters"
+                class="text-xs font-medium text-slate-500 hover:text-red-400 transition-colors flex items-center gap-1 bg-slate-800/50 px-2 py-1 rounded-md"
+              >
+                <Icon name="lucide:x" size="12" /> Clear All
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              <!-- Source Filter -->
+              <div class="space-y-1.5">
+                <label class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                  Source
+                  <Icon v-if="isLoadingFilterOptions" name="lucide:loader-2" size="10" class="animate-spin text-slate-500" />
+                </label>
+                <select v-model="filters.source" class="w-full bg-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:ring-1 focus:ring-indigo-500 outline-none border border-slate-700 appearance-none">
+                  <option :value="null">All Sources</option>
+                  <option v-for="source in distinctSources" :key="source" :value="source">{{ source }}</option>
+                </select>
+              </div>
+
+              <!-- Service Filter -->
+              <div class="space-y-1.5">
+                <label class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                  Service
+                  <Icon v-if="isLoadingFilterOptions" name="lucide:loader-2" size="10" class="animate-spin text-slate-500" />
+                </label>
+                <select v-model="filters.service" class="w-full bg-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:ring-1 focus:ring-indigo-500 outline-none border border-slate-700 appearance-none">
+                  <option :value="null">All Services</option>
+                  <option v-for="service in distinctServices" :key="service" :value="service">{{ service }}</option>
+                </select>
+              </div>
+
+              <!-- Attribution Filter -->
+              <div class="space-y-1.5">
+                <label class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                  Attribution
+                  <Icon v-if="isLoadingFilterOptions" name="lucide:loader-2" size="10" class="animate-spin text-slate-500" />
+                </label>
+                <select v-model="filters.attribution" class="w-full bg-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:ring-1 focus:ring-indigo-500 outline-none border border-slate-700 appearance-none">
+                  <option :value="null">Any Attribution</option>
+                  <option value="unattributed">Unattributed</option>
+                  <option v-for="attr in distinctAttributions" :key="attr" :value="attr">{{ attr }}</option>
+                  <option v-if="!distinctAttributions.includes('Physical Marketing')" value="Physical Marketing">Physical Marketing</option>
+                  <option v-if="!distinctAttributions.includes('Referral')" value="Referral">Referral</option>
+                </select>
+              </div>
+
+              <!-- Remarks Filter -->
+              <div class="space-y-1.5">
+                <label class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Remarks</label>
+                <div class="flex items-center gap-1.5 bg-slate-800 p-1 rounded-lg border border-slate-700 h-[34px]">
+                  <button 
+                    @click="filters.hasRemarks = filters.hasRemarks === true ? null : true"
+                    :class="['flex-1 h-full text-[10px] font-semibold rounded-md transition-colors', filters.hasRemarks === true ? 'bg-indigo-500/20 text-indigo-300 shadow-[inset_0_0_0_1px_rgba(99,102,241,0.4)]' : 'text-slate-400 hover:text-white hover:bg-slate-700']"
+                  >
+                    Has Comments
+                  </button>
+                  <button 
+                    @click="filters.hasRemarks = filters.hasRemarks === false ? null : false"
+                    :class="['flex-1 h-full text-[10px] font-semibold rounded-md transition-colors', filters.hasRemarks === false ? 'bg-indigo-500/20 text-indigo-300 shadow-[inset_0_0_0_1px_rgba(99,102,241,0.4)]' : 'text-slate-400 hover:text-white hover:bg-slate-700']"
+                  >
+                    No Comments
+                  </button>
+                </div>
+              </div>
+
+              <!-- Date Received Range -->
+              <div class="space-y-1.5 lg:col-span-2">
+                <label class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Date Received</label>
+                <div class="flex items-center gap-2">
+                  <input v-model="filters.dateFrom" type="date" class="w-full bg-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 focus:ring-1 focus:ring-indigo-500 outline-none border border-slate-700 [color-scheme:dark]" />
+                  <span class="text-slate-600 text-xs">to</span>
+                  <input v-model="filters.dateTo" type="date" class="w-full bg-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 focus:ring-1 focus:ring-indigo-500 outline-none border border-slate-700 [color-scheme:dark]" />
+                </div>
+              </div>
+
+              <!-- Booking Date Range -->
+              <div class="space-y-1.5 lg:col-span-2">
+                <label class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Booking Date</label>
+                <div class="flex items-center gap-2">
+                  <input v-model="filters.bookingDateFrom" type="date" class="w-full bg-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 focus:ring-1 focus:ring-indigo-500 outline-none border border-slate-700 [color-scheme:dark]" />
+                  <span class="text-slate-600 text-xs">to</span>
+                  <input v-model="filters.bookingDateTo" type="date" class="w-full bg-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 focus:ring-1 focus:ring-indigo-500 outline-none border border-slate-700 [color-scheme:dark]" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </Transition>
+      </div>
+    </Transition>
+   
+    <!-- MAIN TABLE -->
     <div class="rounded-2xl bg-slate-800/40 ring-1 ring-slate-700/50 backdrop-blur-sm overflow-hidden flex flex-col min-h-[500px]">
       
       <div class="hidden lg:grid grid-cols-12 gap-6 bg-slate-800/80 px-6 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-700/50 shrink-0">
@@ -110,7 +321,7 @@
         </div>
 
         <div v-else-if="leads.length === 0 && !pending" class="p-12 text-center text-slate-400">
-          No leads found.
+          No leads match the current filters.
         </div>
         
         <div 
@@ -132,7 +343,6 @@
           </Transition>  
          
           <div class="col-span-3 flex items-start gap-3">
-            
             <div class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-700/50 ring-1 ring-slate-600 text-slate-300 font-bold uppercase">
               {{ lead.name.charAt(0) }}
               <span v-if="!lead.hasReachedOut" class="absolute -top-1 -right-1 flex h-3 w-3" title="Action Required">
@@ -172,7 +382,7 @@
                       Referral
                       <Icon v-if="lead.attribution === 'Referral'" name="lucide:check" size="10" class="text-emerald-400"/>
                     </button>
-                    <button v-if="lead.attribution" @click="handleAttribution(lead, 'unattributed')" class="text-left px-2 py-1.5 text-[10px] text-slate-500 hover:bg-slate-700 rounded transition-colors flex items-center justify-between border-t border-slate-700/50 mt-0.5">
+                    <button v-if="lead.attribution && lead.attribution !== 'unattributed'" @click="handleAttribution(lead, 'unattributed')" class="text-left px-2 py-1.5 text-[10px] text-slate-500 hover:bg-slate-700 rounded transition-colors flex items-center justify-between border-t border-slate-700/50 mt-0.5">
                       Clear
                     </button>
                   </div>
@@ -195,7 +405,7 @@
             </div>
             
             <div class="mt-1.5 flex items-center pl-6">
-              <span v-if="lead.first_visit" class="inline-flex items-center rounded-sm bg-emerald-500/10 px-1 py-0.5 text-[9px] font-semibold text-emerald-400/80 uppercase tracking-widest ring-1 ring-inset ring-emerald-500/20">
+              <span v-if="lead.firstVisit" class="inline-flex items-center rounded-sm bg-emerald-500/10 px-1 py-0.5 text-[9px] font-semibold text-emerald-400/80 uppercase tracking-widest ring-1 ring-inset ring-emerald-500/20">
                 New Client
               </span>
               <span v-else class="inline-flex items-center rounded-sm bg-slate-800 px-1 py-0.5 text-[9px] font-semibold text-slate-500 uppercase tracking-widest">
@@ -342,12 +552,10 @@
             </div>
 
           </div>
-        
-
         </div>
       </div>
 
-      <div class="flex items-center justify-between border-t border-slate-700/50 bg-slate-800/80 px-6 py-4 shrink-0 mt-auto">
+      <div class="flex items-center justify-between border-t border-slate-700/50 bg-slate-800/80 px-6 py-4 shrink-0 mt-auto relative z-10">
         <div class="hidden sm:block">
           <p class="text-sm text-slate-400">
             Showing 
@@ -382,6 +590,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
+
 definePageMeta({
   requiresAuth: true
 });
@@ -389,7 +599,14 @@ definePageMeta({
 // Notifications
 const { show } = useNotifications();
 const { currentOrg } = await useCurrentOrg();
+const { can } = usePermissions();
 
+
+// Advanced Filter Toggle State
+const showFilterBar = ref(false);
+const showAdvancedFilters = ref(false);
+
+// Destructure composable
 // Destructure composable
 const {
   isOwner,
@@ -407,6 +624,23 @@ const {
   qualifiedMetrics,
   isSocketConnected,
   disconnectRealtime,
+  
+  // Filters & Exports
+  filters,
+  clearFilters,
+  activeFilterCount,
+  
+  // --- NEW: Distinct DB Filter Options ---
+  distinctSources,
+  distinctServices,
+  distinctAttributions,
+  isLoadingFilterOptions,
+  refreshFilterOptions,
+  // ---------------------------------------
+
+  isExporting,
+  exportLeadsToCsv,
+
   prevPage,
   nextPage,
   toggleAction,
@@ -414,6 +648,7 @@ const {
   editRemark,
   saveRemark
 } = await useLeadCenter();
+
 
 // --- ONE WAY CONTACTED ACTION + NOTIFICATION ---
 const handleContactedAction = async (lead: any) => {
@@ -441,5 +676,18 @@ const handleContactedAction = async (lead: any) => {
 .toast-leave-to {
   opacity: 0;
   transform: translateY(-10px) scale(0.95);
+}
+
+/* Smooth Slide-Fade for the Advanced Filter Panel */
+.slide-fade-enter-active {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.slide-fade-leave-active {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.98);
 }
 </style>

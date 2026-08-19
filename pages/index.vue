@@ -5,35 +5,31 @@
     <!-- 1. UNIVERSAL HEADER (Seen by everyone)     -->
     <!-- ========================================== -->
     
-      <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div class="flex items-center gap-4">
-
-  <div class="relative h-14 w-14 rounded-full bg-gradient-to-tr from-purple-500 to-emerald-500 p-0.5">
-    
-    <div class="flex h-full w-full items-center justify-center rounded-full border-2 border-slate-900 bg-slate-900 overflow-hidden font-bold text-xl text-purple-500 tracking-wide">
-      {{ userInitials }}
+     <header class="flex items-center justify-between gap-4 w-full">
+  <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+    <div class="relative h-11 w-11 sm:h-14 sm:w-14 rounded-full bg-gradient-to-tr from-purple-500 to-emerald-500 p-[1.5px] sm:p-0.5 shrink-0">
+      <div class="flex h-full w-full items-center justify-center rounded-full border-[1.5px] sm:border-2 border-slate-900 bg-slate-900 overflow-hidden font-bold text-base sm:text-xl text-purple-500 tracking-wide">
+        {{ userInitials }}
+      </div>
+      <div class="absolute bottom-0 right-0 h-3 w-3 sm:h-3.5 sm:w-3.5 rounded-full bg-emerald-500 ring-2 ring-slate-950"></div>
     </div>
 
-    <div class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-emerald-500 ring-2 ring-slate-950"></div>
+    <div class="min-w-0">
+      <p class="text-xs sm:text-sm font-medium text-slate-400 truncate">{{ greeting }},</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-white truncate">{{ user.first_name }}</h1>
+    </div>
   </div>
-        <div>
-          <p class="text-sm font-medium text-slate-400">{{ greeting }},</p>
-          <h1 class="text-2xl font-bold tracking-tight text-white">{{ user.first_name }}</h1>
-        </div>
-      </div>
-      
-      <div class="flex items-center gap-3">
+  
+  <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+    <NotificationTrayDropdown />
 
-          <NotificationTrayDropdown />
-
-         <NuxtLink to ="/settings">
-        <button class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-800/50 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors ring-1 ring-slate-700/50">
-          <Icon name="lucide:settings" size="18" />
-        </button>
-        </NuxtLink>
-      </div>
-    </header>
-
+    <NuxtLink to="/settings">
+      <button class="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-slate-800/50 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors ring-1 ring-slate-700/50">
+        <Icon name="lucide:settings" class="w-[16px] h-[16px] sm:w-[18px] sm:h-[18px]" />
+      </button>
+    </NuxtLink>
+  </div>
+</header>
    <!-- ========================================= -->
     <!-- 2. QUICK START (The Zen Welcome)          -->
     <!-- Seen by Agents/Team Members               -->
@@ -208,164 +204,112 @@
       </div>
     </section>
 
-    <div v-if="showNotifications" class="fixed inset-0 z- flex items-end sm:items-start sm:justify-end p-0 sm:p-4">
-      <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity" @click="showNotifications = false"></div>
-      
-      <div class="relative w-full sm:w-96 rounded-t-3xl sm:rounded-2xl bg-slate-900 ring-1 ring-slate-700 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-right-8 duration-300 max-h-[85vh] flex flex-col mt-16">
-        
-        <div class="flex items-center justify-between border-b border-slate-700/50 bg-slate-800/90 px-5 py-4 backdrop-blur-md shrink-0">
-          <h3 class="text-lg font-bold text-white flex items-center gap-2">
-            <Icon name="lucide:bell" size="18" />
-            Notifications
-          </h3>
-          <div class="flex items-center gap-3">
-            <button v-if="unreadCount > 0" @click="markAllRead" class="text-xs font-medium text-purple-400 hover:text-purple-300 transition-colors">
-              Mark all read
-            </button>
-            <button @click="showNotifications = false" class="text-slate-400 hover:text-white transition-colors">
-              <Icon name="lucide:x" size="20" />
-            </button>
-          </div>
-        </div>
+ 
+ <div v-if="setupItems.length > 0 && can('add_projects')" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+  <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity" @click="closeSetupModal"></div>
+  
+  <div class="relative w-full sm:max-w-xl sm:my-8 rounded-t-3xl sm:rounded-3xl bg-slate-900 ring-1 ring-slate-700 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-full sm:zoom-in-95 duration-300 h-[92vh] sm:h-auto sm:max-h-[85vh] flex flex-col">
+    <button @click="closeSetupModal" class="absolute top-3 right-3 sm:top-4 sm:right-4 h-8 w-8 flex items-center justify-center rounded-full bg-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-700 z-10 transition-colors backdrop-blur-md">
+      <Icon name="lucide:x" size="18" />
+    </button>
 
-        <div class="flex-1 overflow-y-auto p-2">
-          <div v-if="notifications.length === 0" class="p-8 text-center text-slate-400">
-            <Icon name="lucide:bell-off" size="32" class="mx-auto mb-3 opacity-50" />
-            <p class="text-sm">You're all caught up!</p>
-          </div>
-          
-          <div class="space-y-1">
-            <div 
-              v-for="notif in notifications" 
-              :key="notif.id"
-              :class="[
-                'group flex items-start gap-3 p-3 rounded-xl transition-colors cursor-pointer',
-                notif.unread ? 'bg-slate-800/80 hover:bg-slate-800' : 'hover:bg-slate-800/40'
-              ]"
-              @click="notif.unread = false"
-            >
-              <div :class="['flex h-10 w-10 shrink-0 items-center justify-center rounded-full ring-1 ring-inset', notif.bg, notif.color, 'ring-current/20']">
-                <Icon :name="notif.icon" size="18" />
-              </div>
-              <div class="flex-1 min-w-0 pt-0.5">
-                <div class="flex items-center justify-between gap-2">
-                  <p :class="['text-sm truncate', notif.unread ? 'font-bold text-white' : 'font-semibold text-slate-300']">
-                    {{ notif.title }}
-                  </p>
-                  <span class="text-[10px] text-slate-500 whitespace-nowrap">{{ notif.time }}</span>
-                </div>
-                <p class="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">{{ notif.message }}</p>
-              </div>
-              <div v-if="notif.unread" class="h-2 w-2 rounded-full bg-purple-500 mt-2 shrink-0"></div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="h-16 sm:h-24 w-full bg-slate-800 flex items-center justify-center relative overflow-hidden shrink-0 border-b border-slate-700">
+      <div :class="`absolute inset-0 opacity-30 bg-gradient-to-br ${setupItems.colorBg}`"></div>
+      <h3 class="text-lg sm:text-xl font-black text-white relative z-10 tracking-tight">Workspace Setup</h3>
     </div>
 
-    <div v-if="setupItems.length > 0 && can('add_projects')" class="fixed inset-0 z- flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity" @click="closeSetupModal"></div>
+    <div class="p-4 sm:p-6 md:p-8 overflow-y-auto flex-1 loose-scroll">
       
-      <div class="relative w-full max-w-xl rounded-t-3xl sm:rounded-3xl bg-slate-900 ring-1 ring-slate-700 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-full sm:zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
-        <button @click="closeSetupModal" class="absolute top-4 right-4 h-8 w-8 flex items-center justify-center rounded-full bg-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-700 z-10 transition-colors backdrop-blur-md">
-          <Icon name="lucide:x" size="18" />
-        </button>
-
-        <div class="h-24 w-full bg-slate-800 flex items-center justify-center relative overflow-hidden shrink-0 border-b border-slate-700">
-          <div :class="`absolute inset-0 opacity-30 bg-gradient-to-br ${setupItems.colorBg}`"></div>
-          <h3 class="text-xl font-black text-white relative z-10 tracking-tight">Workspace Setup</h3>
+      <div v-if="!isAddingToSetup" class="space-y-4 sm:space-y-6">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Project Name</label>
+          <input v-model="newProjectName" type="text" class="w-full rounded-xl border-0 bg-slate-950 py-3 px-4 text-sm sm:text-base text-white ring-1 ring-inset ring-slate-700 focus:ring-2 focus:ring-purple-500 transition-shadow"/>
         </div>
 
-        <div class="p-6 sm:p-8 overflow-y-auto flex-1">
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider">Included Items</label>
+            <button @click="isAddingToSetup = true" class="text-xs font-medium text-purple-400 hover:text-purple-300 flex items-center gap-1 bg-purple-500/10 px-2.5 py-1.5 rounded-lg transition-colors">
+              <Icon name="lucide:plus" size="14" /> Add Item
+            </button>
+          </div>
           
-          <div v-if="!isAddingToSetup" class="space-y-6">
-            <div>
-              <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Project Name</label>
-              <input v-model="newProjectName" type="text" class="w-full rounded-xl border-0 bg-slate-950 py-3.5 px-4 text-base text-white ring-1 ring-inset ring-slate-700 focus:ring-2 focus:ring-purple-500 transition-shadow"/>
-            </div>
-
-            <div class="space-y-3">
-              <div class="flex items-center justify-between">
-                <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider">Included Items</label>
-                <button @click="isAddingToSetup = true" class="text-xs font-medium text-purple-400 hover:text-purple-300 flex items-center gap-1 bg-purple-500/10 px-2.5 py-1.5 rounded-lg transition-colors">
-                  <Icon name="lucide:plus" size="14" /> Add Item
+          <div class="rounded-xl border border-slate-700/50 bg-slate-800/30 overflow-hidden divide-y divide-slate-700/50">
+            <div v-for="item in setupItems" :key="item.id" class="p-3 flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-900 ring-1 ring-slate-700">
+                <Icon :name="item.icon" size="14" :class="item.iconColor" />
+              </div>
+              <div class="flex-1 min-w-[120px] flex items-center gap-2">
+                <p class="text-sm font-bold text-white truncate">{{ item.name }}</p>
+                <span :class="['text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-md font-bold shrink-0', item.type === 'service' ? 'bg-purple-500/20 text-purple-400' : 'bg-emerald-500/20 text-emerald-400']">{{ item.type }}</span>
+              </div>
+              <div class="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-2 mt-1 sm:mt-0 pt-2 sm:pt-0 border-t border-slate-800 sm:border-0">
+                <p class="text-xs text-slate-400 font-medium sm:text-right">Ksh {{ priceDisplay(item.startingPrice) }}</p>
+                <button v-if="setupItems.length > 1" @click="removeItemFromSetup(item.id)" class="text-slate-500 hover:text-rose-400 transition-colors p-1">
+                  <Icon name="lucide:trash-2" size="16" />
                 </button>
               </div>
-              
-              <div class="rounded-xl border border-slate-700/50 bg-slate-800/30 overflow-hidden divide-y divide-slate-700/50">
-                <div v-for="item in setupItems" :key="item.id" class="p-3 flex items-center gap-3">
-                  <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-900 ring-1 ring-slate-700">
-                    <Icon :name="item.icon" size="14" :class="item.iconColor" />
-                  </div>
-                  <div class="flex-1 flex items-center gap-2">
-                    <p class="text-sm font-bold text-white">{{ item.name }}</p>
-                    <span :class="['text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-md font-bold', item.type === 'service' ? 'bg-purple-500/20 text-purple-400' : 'bg-emerald-500/20 text-emerald-400']">{{ item.type }}</span>
-                  </div>
-                  <p class="text-xs text-slate-400 font-medium">Ksh {{ priceDisplay(item.startingPrice) }}</p>
-                  <button v-if="setupItems.length > 1" @click="removeItemFromSetup(item.id)" class="text-slate-500 hover:text-rose-400 transition-colors p-1 ml-2">
-                    <Icon name="lucide:trash-2" size="16" />
-                  </button>
-                </div>
-              </div>
             </div>
-
-            <div class="rounded-xl bg-purple-500/10 p-4 ring-1 ring-purple-500/20 flex gap-3 items-start">
-              <Icon name="lucide:shield-check" size="20" class="text-purple-400 shrink-0 mt-0.5" />
-              <div>
-                <p class="text-sm font-semibold text-purple-300">Total Est: Ksh{{ currentSetupTotal.toLocaleString() }}</p>
-                <p class="mt-1 text-xs text-purple-200/70 leading-relaxed">No charges today. Billing is deferred until project scope is reviewed.</p>
-              </div>
-            </div>
-
-            <button @click="confirmNewProject" class="w-full flex items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg hover:bg-purple-500 transition-all hover:shadow-purple-500/20">
-              <Icon name="lucide:rocket" size="18" /> Launch Workspace
-            </button>
-          </div>
-
-          <div v-else class="space-y-6 animate-in slide-in-from-right-4 fade-in duration-300">
-            <div class="flex items-center gap-2 mb-2">
-              <button @click="isAddingToSetup = false" class="text-slate-400 hover:text-white flex h-8 w-8 items-center justify-center rounded-full hover:bg-slate-800 transition-colors">
-                <Icon name="lucide:arrow-left" size="18" />
-              </button>
-              <h3 class="text-base font-bold text-white">Add to bundle</h3>
-            </div>
-
-            <div v-if="availableBundleServices.length > 0">
-              <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Services</h4>
-              <div class="grid grid-cols-1 gap-2">
-                <div v-for="item in availableBundleServices" :key="`sb_${item.id}`" @click="addItemToSetup(item)" class="flex items-center gap-3 rounded-xl border border-slate-700/50 bg-slate-800/30 p-3 hover:bg-slate-700 hover:border-purple-500/50 cursor-pointer transition-all group">
-                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-900 group-hover:scale-105 transition-transform">
-                    <Icon :name="item.icon" size="18" :class="item.iconColor" />
-                  </div>
-                  <div class="flex-1">
-                    <p class="text-sm font-bold text-white">{{ item.name }}</p>
-                    <p class="text-xs text-slate-400">+Ksh {{ priceDisplay(item.startingPrice) }}</p>
-                  </div>
-                  <Icon name="lucide:plus-circle" size="18" class="text-slate-500 group-hover:text-purple-400" />
-                </div>
-              </div>
-            </div>
-
-            <div v-if="availableBundleProducts.length > 0">
-              <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Products</h4>
-              <div class="grid grid-cols-1 gap-2">
-                <div v-for="item in availableBundleProducts" :key="`pb_${item.id}`" @click="addItemToSetup(item)" class="flex items-center gap-3 rounded-xl border border-slate-700/50 bg-slate-800/30 p-3 hover:bg-slate-700 hover:border-emerald-500/50 cursor-pointer transition-all group">
-                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-900 group-hover:scale-105 transition-transform">
-                    <Icon :name="item.icon" size="18" :class="item.iconColor" />
-                  </div>
-                  <div class="flex-1">
-                    <p class="text-sm font-bold text-white">{{ item.name }}</p>
-                    <p class="text-xs text-slate-400">+Ksh {{ priceDisplay(item.startingPrice) }}</p>
-                  </div>
-                  <Icon name="lucide:plus-circle" size="18" class="text-slate-500 group-hover:text-emerald-400" />
-                </div>
-              </div>
-            </div>
-
           </div>
         </div>
+
+        <div class="rounded-xl bg-purple-500/10 p-3 sm:p-4 ring-1 ring-purple-500/20 flex gap-3 items-start">
+          <Icon name="lucide:shield-check" size="20" class="text-purple-400 shrink-0 mt-0.5" />
+          <div>
+            <p class="text-sm font-semibold text-purple-300">Total Est: Ksh {{ currentSetupTotal.toLocaleString() }}</p>
+            <p class="mt-0.5 text-xs text-purple-200/70 leading-relaxed">No charges today. Billing is deferred until project scope is reviewed.</p>
+          </div>
+        </div>
+
+        <button @click="confirmNewProject" class="w-full flex items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-3 sm:py-3.5 text-sm font-semibold text-white shadow-lg hover:bg-purple-500 transition-all hover:shadow-purple-500/20">
+          <Icon name="lucide:rocket" size="18" /> Launch Workspace
+        </button>
+      </div>
+
+      <div v-else class="space-y-4 sm:space-y-6 animate-in slide-in-from-right-4 fade-in duration-300">
+        <div class="flex items-center gap-2 mb-2">
+          <button @click="isAddingToSetup = false" class="text-slate-400 hover:text-white flex h-8 w-8 items-center justify-center rounded-full hover:bg-slate-800 transition-colors">
+            <Icon name="lucide:arrow-left" size="18" />
+          </button>
+          <h3 class="text-base font-bold text-white">Add to bundle</h3>
+        </div>
+
+        <div v-if="availableBundleServices.length > 0">
+          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Services</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div v-for="item in availableBundleServices" :key="`sb_${item.id}`" @click="addItemToSetup(item)" class="flex items-center gap-3 rounded-xl border border-slate-700/50 bg-slate-800/30 p-2.5 sm:p-3 hover:bg-slate-700 hover:border-purple-500/50 cursor-pointer transition-all group">
+              <div class="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-slate-900 group-hover:scale-105 transition-transform">
+                <Icon :name="item.icon" size="16" :class="item.iconColor" />
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs sm:text-sm font-bold text-white truncate">{{ item.name }}</p>
+                <p class="text-[11px] sm:text-xs text-slate-400 truncate">+Ksh {{ priceDisplay(item.startingPrice) }}</p>
+              </div>
+              <Icon name="lucide:plus-circle" size="18" class="text-slate-500 group-hover:text-purple-400 shrink-0" />
+            </div>
+          </div>
+        </div>
+
+        <div v-if="availableBundleProducts.length > 0">
+          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Products</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div v-for="item in availableBundleProducts" :key="`pb_${item.id}`" @click="addItemToSetup(item)" class="flex items-center gap-3 rounded-xl border border-slate-700/50 bg-slate-800/30 p-2.5 sm:p-3 hover:bg-slate-700 hover:border-emerald-500/50 cursor-pointer transition-all group">
+              <div class="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-slate-900 group-hover:scale-105 transition-transform">
+                <Icon :name="item.icon" size="16" :class="item.iconColor" />
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs sm:text-sm font-bold text-white truncate">{{ item.name }}</p>
+                <p class="text-[11px] sm:text-xs text-slate-400 truncate">+Ksh {{ priceDisplay(item.startingPrice) }}</p>
+              </div>
+              <Icon name="lucide:plus-circle" size="18" class="text-slate-500 group-hover:text-emerald-400 shrink-0" />
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
+  </div>
+</div>
 
     <div v-if="activeProject && can('view_projects')" class="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity" @click="closeProjectDetails"></div>
@@ -482,6 +426,7 @@ const { user, userInitials } = useAuth();
 // 1. Instantly grab the global organization context
 const { currentOrg, orgId, myOrgRole, orgName } = await useCurrentOrg();
 const { can } = usePermissions();
+const { show } = useNotifications();
 
 // --- 1. INITIALIZE DATA SERVICES ---
 const projectService = useDataService<Project>('projects');
@@ -526,16 +471,17 @@ const getProjectPriceDisplay = (project: Project) => {
   }
 
   // 2. Calculate the numeric total safely
-  // We parse each item because some might be "Variable" strings
   const numericTotal = project.servicesIncluded.reduce((sum, item) => {
-    const p = parseInt(item.startingPrice.replace(/,/g, ''));
+    // Force startingPrice to a string safely, fallback to '0' if null/undefined
+    const rawPrice = String(item?.startingPrice ?? '0');
+    const p = parseInt(rawPrice.replace(/,/g, ''));
     return sum + (isNaN(p) ? 0 : p);
   }, 0);
 
-  // 3. If the total is 0 but there are items, it likely means they are all "Variable"
+  // 3. If the total is 0 but there are items, they might be "Variable" strings
   if (numericTotal === 0 && project.servicesIncluded.length > 0) {
-    // Return the name of the first item or a generic label
-    return project.servicesIncluded.startingPrice; 
+    // Safe fallback: grab the price display of the first item
+    return String(project.servicesIncluded[0]?.startingPrice ?? 'Variable'); 
   }
 
   // 4. Otherwise, return the formatted currency
@@ -628,10 +574,25 @@ const confirmNewProject = async () => {
       // Now inject it into the UI—no missing icons!
       projects.value.unshift(fullyPopulatedProject);
       closeSetupModal();
+      show({
+        title: "New Project",
+        message: "Hooray! Kindly except a reach out to review scope and kick off",
+        type: "success",
+        showInTray: true,
+        nativePush: false 
+  });
     }
   } catch (error) {
     console.error("Failed to create project:", error);
     // Handle toast notification here
+     show({
+        title: "Failed",
+        message: "Project creation failed. Please check your network and try again",
+        type: "error",
+        showInTray: false,
+        nativePush: false 
+  });
+
   } finally {
     isCreating.value = false;
   }
