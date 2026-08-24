@@ -1,21 +1,33 @@
 <template>
   <div
-    class="fixed bottom-0 left-0 right-0 z-20 pb-6 sm:pb-8 px-4 pointer-events-none"
+    class="fixed left-0 right-0 z-50 pointer-events-none px-4 bottom-6 lg:bottom-auto lg:top-6 transition-all duration-500"
   >
-    <nav class="mx-auto w-full max-w-lg pointer-events-auto">
+    <nav class="mx-auto w-full max-w-[400px] lg:max-w-md pointer-events-auto">
+      <!-- 
+        FROSTED GLASS CONTAINER: 
+        Replaces dark bg with translucent white, soft borders, and Apple-style drop shadows. 
+      -->
       <div
-        class="relative flex h-[76px] items-center rounded-full bg-slate-900/90 px-2 backdrop-blur-2xl ring-1 ring-slate-700/50 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.8),0_0_20px_-5px_rgba(168,85,247,0.3)]"
+        class="relative flex h-[64px] lg:h-[68px] items-center rounded-full bg-white/70 px-1.5 backdrop-blur-2xl shadow-[0_8px_30px_rgb(0,0,0,0.06),0_1px_3px_rgb(0,0,0,0.02)] border border-black/[0.04]"
       >
+        <!-- 
+          ACTIVE SLIDER BACKGROUND: 
+          Replaces the purple glow with a clean, soft zinc pill that slides behind the active item. 
+        -->
         <div
-          class="absolute inset-y-2 rounded-full bg-gradient-to-b from-purple-500/20 to-purple-600/5 transition-all duration-500 spring-bounce ease-out"
+          class="absolute inset-y-1.5 rounded-full bg-zinc-100/80 border border-zinc-200/50 shadow-sm transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
           :class="activeIndex !== -1 ? 'opacity-100' : 'opacity-0'"
           :style="{
-            width: `calc((100% - 16px) / ${visibleNavItems.length})`,
+            width: `calc((100% - 12px) / ${visibleNavItems.length})`,
             transform: `translateX(${activeIndex * 100}%)`,
           }"
         >
+          <!-- 
+            ACTIVE INDICATOR DOT: 
+            Replaces the top neon bar with a subtle, sophisticated dark dot at the bottom of the active pill. 
+          -->
           <div
-            class="absolute -top-2 left-1/2 -translate-x-1/2 w-10 h-1.5 rounded-b-full bg-gradient-to-r from-fuchsia-400 to-purple-500 shadow-[0_2px_15px_rgba(168,85,247,1)]"
+            class="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-zinc-800"
           ></div>
         </div>
 
@@ -23,37 +35,39 @@
           v-for="(item, index) in visibleNavItems"
           :key="item.path"
           :to="item.path"
-          class="group relative z-10 flex flex-1 flex-col items-center justify-center h-full rounded-full transition-all duration-300 active:scale-90 outline-none -webkit-tap-highlight-transparent min-w-0"
+          class="group relative z-10 flex flex-1 flex-col items-center justify-center h-full rounded-full transition-all duration-300 active:scale-95 outline-none -webkit-tap-highlight-transparent min-w-0"
         >
           <div
-            class="relative flex flex-col items-center justify-center gap-1.5 w-full px-1"
+            class="relative flex flex-col items-center justify-center gap-1 w-full px-1"
           >
+            <!-- ICON -->
             <div
               class="transition-all duration-400 ease-out flex items-center justify-center"
               :class="
                 activeIndex === index
-                  ? '-translate-y-1.5 scale-[1.15]'
+                  ? '-translate-y-1 scale-110'
                   : 'translate-y-0 scale-100 group-hover:-translate-y-0.5'
               "
             >
               <Icon
                 :name="item.icon"
-                size="24"
-                class="transition-all duration-300"
+                size="22"
+                class="transition-colors duration-300"
                 :class="
                   activeIndex === index
-                    ? 'text-white drop-shadow-[0_0_12px_rgba(168,85,247,0.9)] pop-animation'
-                    : 'text-slate-400 group-hover:text-slate-200'
+                    ? 'text-zinc-900'
+                    : 'text-zinc-400 group-hover:text-zinc-600'
                 "
               />
             </div>
 
+            <!-- LABEL -->
             <span
-              class="text-[11px] sm:text-xs leading-[1.1] transition-all duration-300 w-full text-center px-0.5 break-words antialiased"
+              class="text-[9px] lg:text-[10px] leading-none transition-all duration-300 w-full text-center px-0.5 antialiased uppercase tracking-widest"
               :class="
                 activeIndex === index
-                  ? 'text-white font-bold tracking-tight drop-shadow-md'
-                  : 'text-slate-500 font-semibold tracking-normal group-hover:text-slate-300'
+                  ? 'text-zinc-900 font-bold'
+                  : 'text-zinc-400 font-medium group-hover:text-zinc-600'
               "
             >
               {{ item.label }}

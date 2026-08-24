@@ -18,6 +18,7 @@
     "@nuxt/kit": "^4.5.2",
     "apexcharts": "^5.15.2",
     "eslint": "^9.0.0",
+    "html2pdf.js": "^0.14.0",
     "nuxt": "^3.17.5",
     "nuxt-vue3-google-signin": "0.0.13",
     "tus-js-client": "^4.3.1",
@@ -31,6 +32,7 @@
     "onlyBuiltDependencies": [
       "@parcel/watcher",
       "@tailwindcss/oxide",
+      "core-js",
       "esbuild",
       "unrs-resolver"
     ]
@@ -38,6 +40,7 @@
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
+    "@iconify-json/lucide": "^1.2.124",
     "@nuxtjs/tailwindcss": "6.12.2",
     "changelogen": "^0.6.2",
     "eslint-config-prettier": "^10.1.8",

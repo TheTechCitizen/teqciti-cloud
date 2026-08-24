@@ -1,106 +1,197 @@
 <template>
-  <div class="mx-auto w-full max-w-4xl px-4 py-8 pb-28 sm:px-6 lg:px-8 space-y-10">
-    
+  <div
+    class="mx-auto w-full max-w-4xl px-4 py-8 pb-28 sm:px-6 lg:px-8 space-y-10"
+  >
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-bold tracking-tight text-white">Performance Reports</h1>
-        <p class="mt-2 text-sm text-slate-400">Monthly breakdowns of campaigns, leads, and deliverables.</p>
+        <h1 class="text-3xl font-bold tracking-tight text-white">
+          Performance Reports
+        </h1>
+        <p class="mt-2 text-sm text-slate-400">
+          Monthly breakdowns of your projects,leads and assessments.
+        </p>
       </div>
     </div>
 
     <!-- Loading State -->
     <div v-if="pending" class="flex justify-center py-20">
-      <Icon name="lucide:loader-2" class="animate-spin text-purple-500" size="32" />
+      <Icon
+        name="lucide:loader-2"
+        class="animate-spin text-purple-500"
+        size="32"
+      />
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="!reports || reports.length === 0" class="flex flex-col items-center justify-center rounded-2xl bg-slate-800/30 p-12 ring-1 ring-slate-700/50 text-center">
-      <img src="/img/illustrations/3.png" alt="No reports yet" class="w-40 h-40 opacity-50 mb-6 object-contain" />
+    <div
+      v-else-if="!reports || reports.length === 0"
+      class="flex flex-col items-center justify-center rounded-2xl bg-slate-800/30 p-12 ring-1 ring-slate-700/50 text-center"
+    >
+      <img
+        src="/img/illustrations/3.png"
+        alt="No reports yet"
+        class="w-40 h-40 opacity-50 mb-6 object-contain"
+      />
       <h3 class="text-lg font-semibold text-white">No reports available</h3>
-      <p class="mt-2 text-sm text-slate-400 max-w-sm">Your performance data will appear here once your first campaign cycle completes.</p>
+      <p class="mt-2 text-sm text-slate-400 max-w-sm">
+        Your performance data will appear here once your project is live and the
+        first cycle is complete
+      </p>
     </div>
 
     <!-- Reports Feed (Accordion) -->
     <div v-else class="space-y-6">
-      <article 
-        v-for="(report, index) in reports" 
+      <article
+        v-for="(report, index) in reports"
         :key="report.id"
         class="relative overflow-hidden rounded-2xl bg-slate-800/40 ring-1 transition-all duration-300 backdrop-blur-sm"
-        :class="expandedReports.includes(report.id) ? 'ring-purple-500/50 shadow-lg shadow-purple-500/5' : 'ring-slate-700/50 hover:ring-slate-600'"
+        :class="
+          expandedReports.includes(report.id)
+            ? 'ring-purple-500/50 shadow-lg shadow-purple-500/5'
+            : 'ring-slate-700/50 hover:ring-slate-600'
+        "
       >
         <!-- Highlight glow for the most recent report -->
-        <div v-if="index === 0" class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-emerald-500"></div>
+        <div
+          v-if="index === 0"
+          class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-emerald-500"
+        ></div>
 
         <!-- ACCORDION HEADER (Clickable) -->
-        <div 
+        <div
           @click="toggleReport(report.id)"
           class="cursor-pointer border-b border-slate-700/50 bg-slate-800/50 px-6 py-5 flex flex-wrap items-center justify-between gap-4 transition-colors hover:bg-slate-800/80"
         >
           <div class="flex items-center gap-4">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 ring-1 ring-slate-700">
-              <Icon name="lucide:bar-chart-2" size="20" :class="expandedReports.includes(report.id) ? 'text-purple-400' : 'text-slate-400'" />
+            <div
+              class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 ring-1 ring-slate-700"
+            >
+              <Icon
+                name="lucide:bar-chart-2"
+                size="20"
+                :class="
+                  expandedReports.includes(report.id)
+                    ? 'text-purple-400'
+                    : 'text-slate-400'
+                "
+              />
             </div>
             <div>
-              <h2 class="text-xl font-bold text-white">{{ report.formattedPeriod }}</h2>
-              <p class="text-xs text-slate-400">Published: {{ report.publishedAt }}</p>
+              <h2 class="text-xl font-bold text-white">
+                {{ report.formattedPeriod }}
+              </h2>
+              <p class="text-xs text-slate-400">
+                Published: {{ report.publishedAt }}
+              </p>
             </div>
           </div>
-          
+
           <div class="flex items-center gap-4">
-            <button @click.stop class="flex items-center gap-2 rounded-lg bg-purple-600/10 px-3 py-1.5 text-sm font-medium text-purple-400 hover:bg-purple-600 hover:text-white transition-colors ring-1 ring-inset ring-purple-500/20">
-              <Icon name="lucide:download" size="16" />
-              <span class="hidden sm:inline">PDF</span>
+            <button
+              v-if="can('export_report')"
+              @click.stop="exportReportAsPdf(report)"
+              :disabled="exportingReportId === report.id"
+              class="flex items-center gap-2 rounded-lg bg-purple-600/10 px-3 py-1.5 text-sm font-medium text-purple-400 hover:bg-purple-600 hover:text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors ring-1 ring-inset ring-purple-500/20"
+            >
+              <Icon
+                v-if="exportingReportId === report.id"
+                name="lucide:loader-2"
+                size="16"
+                class="animate-spin"
+              />
+              <Icon v-else name="lucide:download" size="16" />
+              <span class="hidden sm:inline">{{
+                exportingReportId === report.id ? 'Exporting...' : 'PDF'
+              }}</span>
             </button>
-            
+
             <!-- Accordion Chevron -->
             <div class="p-1 rounded-full bg-slate-900/50 text-slate-400">
-              <Icon 
-                name="lucide:chevron-down" 
-                size="20" 
+              <Icon
+                name="lucide:chevron-down"
+                size="20"
                 class="transition-transform duration-300"
-                :class="expandedReports.includes(report.id) ? 'rotate-180 text-white' : ''" 
+                :class="
+                  expandedReports.includes(report.id)
+                    ? 'rotate-180 text-white'
+                    : ''
+                "
               />
             </div>
           </div>
         </div>
 
         <!-- ACCORDION BODY -->
-        <div v-show="expandedReports.includes(report.id)" class="p-6 space-y-8 animate-in slide-in-from-top-2 duration-300">
-          
+        <div
+          v-show="expandedReports.includes(report.id)"
+          :ref="(el) => setReportRef(report.id, el)"
+          class="p-6 space-y-8 animate-in slide-in-from-top-2 duration-300"
+        >
           <!-- ORIGINAL: Executive Summary -->
           <!-- (Using report.executiveSummary - rename this to match your API if needed) -->
-          <div v-if="report.executiveSummary" class="relative rounded-xl bg-slate-800/50 p-6 ring-1 ring-slate-700/50">
-            <div class="absolute left-0 top-6 bottom-6 w-1 rounded-r-md bg-purple-500"></div>
-            <h3 class="text-sm font-semibold text-white flex items-center gap-2 mb-3">
-              <Icon name="lucide:file-search" size="16" class="text-purple-400" />
+          <div
+            v-if="report.executiveSummary"
+            class="relative rounded-xl bg-slate-800/50 p-6 ring-1 ring-slate-700/50"
+          >
+            <div
+              class="absolute left-0 top-6 bottom-6 w-1 rounded-r-md bg-purple-500"
+            ></div>
+            <h3
+              class="text-sm font-semibold text-white flex items-center gap-2 mb-3"
+            >
+              <Icon
+                name="lucide:file-search"
+                size="16"
+                class="text-purple-400"
+              />
               Executive Summary
             </h3>
-            <p class="text-sm text-slate-300 leading-relaxed whitespace-pre-line">
+            <p
+              class="text-sm text-slate-300 leading-relaxed whitespace-pre-line"
+            >
               {{ report.executiveSummary }}
             </p>
           </div>
 
           <!-- NEW: Block Editor Details Field -->
-          <div v-if="report.details && report.details.length > 0" class="rounded-xl bg-slate-900/30 p-6 ring-1 ring-slate-700/50">
-            <div class="prose prose-invert prose-slate max-w-none prose-p:text-slate-300 prose-headings:text-slate-200 prose-a:text-purple-400">
+          <div
+            v-if="report.details && report.details.length > 0"
+            class="rounded-xl bg-slate-900/30 p-6 ring-1 ring-slate-700/50"
+          >
+            <div
+              class="prose prose-invert prose-slate max-w-none prose-p:text-slate-300 prose-headings:text-slate-200 prose-a:text-purple-400"
+            >
               <BlockRenderer :blocks="report.details" />
             </div>
           </div>
 
           <!-- DYNAMIC GRAPH INJECTION -->
-          <div v-if="report.chartData || report.chart_data" class="rounded-xl bg-slate-900/50 p-6 ring-1 ring-slate-700/50">
-            <h3 class="text-sm font-semibold text-slate-300 mb-4">{{ (report.chartData || report.chart_data).title }}</h3>
+          <div
+            v-if="report.chartData || report.chart_data"
+            class="rounded-xl bg-slate-900/50 p-6 ring-1 ring-slate-700/50"
+          >
+            <h3 class="text-sm font-semibold text-slate-300 mb-4">
+              {{ (report.chartData || report.chart_data).title }}
+            </h3>
             <div class="h-[300px] w-full">
               <ClientOnly>
-                <apexchart 
-                  type="area" 
-                  height="300" 
-                  :options="getChartOptions((report.chartData || report.chart_data).categories)" 
-                  :series="(report.chartData || report.chart_data).series" 
+                <apexchart
+                  type="area"
+                  height="300"
+                  :options="
+                    getChartOptions(
+                      (report.chartData || report.chart_data).categories,
+                    )
+                  "
+                  :series="(report.chartData || report.chart_data).series"
                 />
                 <template #fallback>
-                  <div class="h-full w-full flex items-center justify-center text-slate-500">Loading chart...</div>
+                  <div
+                    class="h-full w-full flex items-center justify-center text-slate-500"
+                  >
+                    Loading chart...
+                  </div>
                 </template>
               </ClientOnly>
             </div>
@@ -108,16 +199,22 @@
 
           <!-- FULL WIDTH: Agency Marketing KPIs -->
           <div v-if="report.agencyMetrics && report.agencyMetrics.length > 0">
-            <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Campaign Operations</h3>
+            <h3
+              class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3"
+            >
+              Campaign Operations
+            </h3>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div 
-                v-for="metric in report.agencyMetrics" 
+              <div
+                v-for="metric in report.agencyMetrics"
                 :key="metric.label"
                 class="rounded-xl bg-slate-900/50 p-4 ring-1 ring-slate-700/50 flex flex-col justify-between"
               >
                 <div class="flex items-center gap-2 text-slate-400 mb-2">
                   <Icon :name="metric.icon || 'lucide:trending-up'" size="14" />
-                  <p class="text-xs font-medium uppercase tracking-wider">{{ metric.label }}</p>
+                  <p class="text-xs font-medium uppercase tracking-wider">
+                    {{ metric.label }}
+                  </p>
                 </div>
                 <p class="text-2xl font-bold text-white">{{ metric.value }}</p>
               </div>
@@ -125,58 +222,108 @@
           </div>
 
           <!-- FULL WIDTH: Client-Side Results -->
-          <div v-if="report.clientResults && report.clientResults.length > 0" class="rounded-xl bg-indigo-500/5 p-5 ring-1 ring-indigo-500/20">
-            <h3 class="text-sm font-semibold text-indigo-400 flex items-center gap-2 mb-4">
+          <div
+            v-if="report.clientResults && report.clientResults.length > 0"
+            class="rounded-xl bg-indigo-500/5 p-5 ring-1 ring-indigo-500/20"
+          >
+            <h3
+              class="text-sm font-semibold text-indigo-400 flex items-center gap-2 mb-4"
+            >
               <Icon name="lucide:briefcase" size="16" />
               Client-Side Outcomes
             </h3>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div 
-                v-for="result in report.clientResults" 
+              <div
+                v-for="result in report.clientResults"
                 :key="result.label"
                 class="rounded-lg bg-slate-900/40 p-4 ring-1 ring-indigo-500/10"
               >
                 <div class="flex items-center gap-2 text-indigo-300/70 mb-1">
-                  <Icon :name="result.icon || 'lucide:check-circle'" size="14" />
-                  <p class="text-xs font-medium uppercase tracking-wider">{{ result.label }}</p>
+                  <Icon
+                    :name="result.icon || 'lucide:check-circle'"
+                    size="14"
+                  />
+                  <p class="text-xs font-medium uppercase tracking-wider">
+                    {{ result.label }}
+                  </p>
                 </div>
                 <p class="text-xl font-bold text-white">{{ result.value }}</p>
-                <p v-if="result.description" class="mt-1 text-xs text-slate-500">{{ result.description }}</p>
+                <p
+                  v-if="result.description"
+                  class="mt-1 text-xs text-slate-500"
+                >
+                  {{ result.description }}
+                </p>
               </div>
             </div>
           </div>
 
           <!-- FULL WIDTH: Task Checklist -->
-          <div v-if="report.tasks && report.tasks.length > 0" class="rounded-xl bg-slate-800/50 p-5 ring-1 ring-slate-700/50 h-full">
-            <h3 class="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+          <div
+            v-if="report.tasks && report.tasks.length > 0"
+            class="rounded-xl bg-slate-800/50 p-5 ring-1 ring-slate-700/50 h-full"
+          >
+            <h3
+              class="text-sm font-semibold text-white mb-4 flex items-center gap-2"
+            >
               <Icon name="lucide:list-todo" size="16" class="text-slate-400" />
               Deliverables Checklist
             </h3>
-            
+
             <div class="mb-6 space-y-2">
               <div class="flex justify-between items-end">
-                <p class="text-xs font-medium text-slate-400">Completion Rate</p>
-                <span class="text-sm font-bold text-emerald-400">{{ calculateCompletionRate(report.tasks) }}%</span>
+                <p class="text-xs font-medium text-slate-400">
+                  Completion Rate
+                </p>
+                <span class="text-sm font-bold text-emerald-400"
+                  >{{ calculateCompletionRate(report.tasks) }}%</span
+                >
               </div>
-              <div class="h-1.5 w-full overflow-hidden rounded-full bg-slate-900">
-                <div 
+              <div
+                class="h-1.5 w-full overflow-hidden rounded-full bg-slate-900"
+              >
+                <div
                   class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-1000"
-                  :style="{ width: `${calculateCompletionRate(report.tasks)}%` }"
+                  :style="{
+                    width: `${calculateCompletionRate(report.tasks)}%`,
+                  }"
                 ></div>
               </div>
             </div>
 
             <ul class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <li v-for="(task, tIndex) in report.tasks" :key="tIndex" class="flex items-start gap-3 group">
+              <li
+                v-for="(task, tIndex) in report.tasks"
+                :key="tIndex"
+                class="flex items-start gap-3 group"
+              >
                 <div class="mt-0.5 shrink-0">
-                  <Icon v-if="task.isCompleted" name="lucide:check-circle-2" size="18" class="text-emerald-400" />
-                  <Icon v-else name="lucide:circle" size="18" class="text-slate-600" />
+                  <Icon
+                    v-if="task.isCompleted"
+                    name="lucide:check-circle-2"
+                    size="18"
+                    class="text-emerald-400"
+                  />
+                  <Icon
+                    v-else
+                    name="lucide:circle"
+                    size="18"
+                    class="text-slate-600"
+                  />
                 </div>
                 <div class="flex flex-col">
-                  <span :class="['text-sm font-medium transition-colors', task.isCompleted ? 'text-slate-300' : 'text-slate-400']">
+                  <span
+                    :class="[
+                      'text-sm font-medium transition-colors',
+                      task.isCompleted ? 'text-slate-300' : 'text-slate-400',
+                    ]"
+                  >
                     {{ task.name }}
                   </span>
-                  <span v-if="task.description" class="text-xs text-slate-500 mt-0.5 leading-snug pr-4">
+                  <span
+                    v-if="task.description"
+                    class="text-xs text-slate-500 mt-0.5 leading-snug pr-4"
+                  >
                     {{ task.description }}
                   </span>
                 </div>
@@ -185,16 +332,22 @@
           </div>
 
           <!-- EXTREME BOTTOM: Challenges -->
-          <div v-if="report.challenges" class="rounded-xl bg-rose-500/10 p-5 ring-1 ring-rose-500/20 mt-4">
-            <h3 class="text-sm font-semibold text-rose-400 flex items-center gap-2 mb-2">
+          <div
+            v-if="report.challenges"
+            class="rounded-xl bg-rose-500/10 p-5 ring-1 ring-rose-500/20 mt-4"
+          >
+            <h3
+              class="text-sm font-semibold text-rose-400 flex items-center gap-2 mb-2"
+            >
               <Icon name="lucide:alert-triangle" size="16" />
               Challenges & Roadblocks
             </h3>
-            <p class="text-sm text-rose-200/80 leading-relaxed whitespace-pre-line">
+            <p
+              class="text-sm text-rose-200/80 leading-relaxed whitespace-pre-line"
+            >
               {{ report.challenges }}
             </p>
           </div>
-
         </div>
       </article>
     </div>
@@ -202,69 +355,158 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, nextTick } from 'vue'
 
 definePageMeta({
   requiresAuth: true,
   requiredCapability: 'view_reports',
-});
+})
 
-const expandedReports = ref<string[]>([]);
+const expandedReports = ref<string[]>([])
 
-const { orgId } = await useCurrentOrg();
-const { reports, pending } = await useReports(orgId.value);
+// NEW — per-report template refs, needed so the export function can target the specific
+// report's rendered content. A single ref wouldn't work here since there are multiple
+// reports in a v-for.
+const reportRefs = ref<Record<string, HTMLElement | null>>({})
+const setReportRef = (id: string, el: any) => {
+  if (el) reportRefs.value[id] = el
+}
+// NEW — tracks which specific report is currently being exported, not a single global flag,
+// since a user could plausibly click "PDF" on report A while report B is still generating.
+const exportingReportId = ref<string | null>(null)
 
-watch(reports, (newReports) => {
-  if (newReports && newReports.length > 0 && expandedReports.value.length === 0) {
-    expandedReports.value.push(newReports[0].id);
-  }
-}, { immediate: true });
+const { orgId } = await useCurrentOrg()
+const { reports, pending } = await useReports(orgId.value)
+const { show } = useNotifications()
+const { can } = usePermissions()
+
+watch(
+  reports,
+  (newReports) => {
+    if (
+      newReports &&
+      newReports.length > 0 &&
+      expandedReports.value.length === 0
+    ) {
+      expandedReports.value.push(newReports[0].id)
+    }
+  },
+  { immediate: true },
+)
 
 const toggleReport = (id: string) => {
-  const index = expandedReports.value.indexOf(id);
+  const index = expandedReports.value.indexOf(id)
   if (index > -1) {
-    expandedReports.value.splice(index, 1);
+    expandedReports.value.splice(index, 1)
   } else {
-    expandedReports.value.push(id);
+    expandedReports.value.push(id)
   }
-};
+}
+
+// NEW — client-side PDF export of the expanded report content, using html2pdf.js
+// (html2canvas + jsPDF combined). Requires `npm install html2pdf.js` in the real project —
+// not something I can confirm is already installed. Dynamically imported specifically
+// because this library relies on browser APIs (document, canvas) that don't exist during
+// Nuxt's SSR pass — a static top-level import would break server rendering entirely.
+const exportReportAsPdf = async (report: any) => {
+  if (exportingReportId.value) return
+  exportingReportId.value = report.id
+
+  // The accordion body is hidden via v-show (display:none) when collapsed — a
+  // screenshot-based capture can't read zero-height, display:none content. Temporarily
+  // expand if it wasn't already, restore the original state afterward either way.
+  const wasExpanded = expandedReports.value.includes(report.id)
+  if (!wasExpanded) {
+    expandedReports.value.push(report.id)
+  }
+  await nextTick()
+
+  const el = reportRefs.value[report.id]
+  // NEW — set directly on the element itself rather than relying on html2pdf.js's
+  // backgroundColor option, which has known propagation issues and only ever fills gaps
+  // anyway, not override a genuinely transparent element. This guarantees html2canvas sees
+  // a real, painted background, since it's just normal CSS now, not optional behavior.
+  const originalBg = el?.style.backgroundColor
+
+  try {
+    const el = reportRefs.value[report.id]
+    if (!el) throw new Error('Report content element not found')
+    el.style.backgroundColor = '#1e293b'
+
+    const html2pdf = (await import('html2pdf.js')).default
+    await html2pdf()
+      .set({
+        margin: 10,
+        filename: `${String(report.formattedPeriod).replace(/\s/g, '-')}-report.pdf`,
+        image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      })
+      .from(el)
+      .save()
+  } catch (e) {
+    console.error('Failed to generate report PDF', e)
+    show({
+      title: 'Export failed',
+      message: 'Could not generate the PDF. Please try again.',
+      type: 'error',
+      showInTray: true,
+      nativePush: false,
+    })
+  } finally {
+    // Restore exactly what was there before — don't leave a permanent inline style behind
+    // on the actual page.
+    if (el) el.style.backgroundColor = originalBg || ''
+    if (!wasExpanded) {
+      expandedReports.value = expandedReports.value.filter(
+        (rid) => rid !== report.id,
+      )
+    }
+    exportingReportId.value = null
+  }
+}
 
 const calculateCompletionRate = (tasks: any[]) => {
-  if (!tasks || tasks.length === 0) return 0;
-  const completed = tasks.filter(t => t.isCompleted).length;
-  return Math.round((completed / tasks.length) * 100);
-};
+  if (!tasks || tasks.length === 0) return 0
+  const completed = tasks.filter((t) => t.isCompleted).length
+  return Math.round((completed / tasks.length) * 100)
+}
 
 const getChartOptions = (categories: string[]) => {
   return {
     chart: {
       toolbar: { show: false },
       background: 'transparent',
-      fontFamily: 'inherit'
+      fontFamily: 'inherit',
     },
     theme: { mode: 'dark' },
     colors: ['#a855f7', '#34d399', '#6366f1'],
     stroke: { curve: 'smooth', width: 2 },
     fill: {
       type: 'gradient',
-      gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 100] }
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.4,
+        opacityTo: 0.05,
+        stops: [0, 100],
+      },
     },
     xaxis: {
       categories: categories || [],
       axisBorder: { show: false },
       axisTicks: { show: false },
-      labels: { style: { colors: '#94a3b8' } }
+      labels: { style: { colors: '#94a3b8' } },
     },
     yaxis: {
-      labels: { style: { colors: '#94a3b8' } }
+      labels: { style: { colors: '#94a3b8' } },
     },
     grid: {
       borderColor: '#334155',
       strokeDashArray: 4,
-      yaxis: { lines: { show: true } }
+      yaxis: { lines: { show: true } },
     },
     dataLabels: { enabled: false },
-    tooltip: { theme: 'dark' }
-  };
-};
+    tooltip: { theme: 'dark' },
+  }
+}
 </script>

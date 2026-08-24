@@ -4,30 +4,28 @@ export default defineAppConfig({
   logo: '/img/logos/logo.png',
   author: {
     name: 'TheTechCitizen',
-    link: 'https://thetechcitizen.com'
+    link: 'https://thetechcitizen.com',
   },
-   client: {
-     name: 'NA',
-     contactEmail: 'NA',
-     contactPhone: 'NA',
-     address: 'NA'
-   },
+  client: {
+    name: 'NA',
+    contactEmail: 'NA',
+    contactPhone: 'NA',
+    address: 'NA',
+  },
 
   dashboardHome: '',
 
   dash: {
-    defaultAvatar: '/img/avatars/3.png'
+    defaultAvatar: '/img/avatars/3.png',
   },
 
-   auth: {
+  auth: {
     provider: 'primary',
-    redirect: '/login'
+    redirect: '/login',
   },
 
   permissions: {
-    member: [
-      'access_member_only_view', 
-    ],
+    member: ['access_member_only_view'],
     admin: [
       'view_projects',
       'add_projects',
@@ -38,69 +36,64 @@ export default defineAppConfig({
       'manage_team',
       'filter_leads',
       'view_lead_totals',
+      'export_report',
     ],
     owner: [
-      'view_projects', 
-      'add_projects', 
-      'view_services', 
-      'view_reports', 
+      'view_projects',
+      'add_projects',
+      'view_services',
+      'view_reports',
       'view_call_center',
       'view_team',
       'manage_team',
       'view_billing',
       'filter_leads',
       'view_lead_totals',
-    ]
+    ],
   },
-
 
   navbar: {
     ctashow: true,
-    cta: "Login",
-    ctalink: "/",
+    cta: 'Login',
+    ctalink: '/',
     routes: {
       company: {
-        category: "Company",
-        links: [
-          { title: "Home", path: "/" },
-
-      ],
+        category: 'Company',
+        links: [{ title: 'Home', path: '/' }],
       },
 
-        services: {
-          category: "Services",
-          links: [],
+      services: {
+        category: 'Services',
+        links: [],
+      },
+      legal: {
+        category: 'Legal',
+        links: [
+          { title: 'Privacy Policy', url: '/privacy-policy' },
+          { title: 'Terms of Service', url: '/terms-of-service' },
+        ],
+      },
     },
-        legal: {
-          category: "Legal",
-          links: [
-            { title: "Privacy Policy", url: "/privacy-policy" },
-            { title: "Terms of Service", url: "/terms-of-service" },
-          ],
-    },
-}
-},
+  },
 
   footer: {
     routes: {
       company: {
-        category: "Company",
-        links: [
-          { title: "Home", path: "/" },
-      ],
+        category: 'Company',
+        links: [{ title: 'Home', path: '/' }],
       },
 
-        services: {
-          category: "Services",
-          links: [],
+      services: {
+        category: 'Services',
+        links: [],
+      },
+      legal: {
+        category: 'Legal',
+        links: [
+          { title: 'Privacy Policy', url: '/privacy-policy' },
+          { title: 'Terms of Service', url: '/terms-of-service' },
+        ],
+      },
     },
-        legal: {
-          category: "Legal",
-          links: [
-            { title: "Privacy Policy", url: "/privacy-policy" },
-            { title: "Terms of Service", url: "/terms-of-service" },
-          ],
-    },
-    },
-}
+  },
 })
