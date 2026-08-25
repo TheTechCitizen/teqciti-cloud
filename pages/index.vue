@@ -384,7 +384,7 @@
           <h3
             class="text-lg sm:text-xl font-black text-white relative z-10 tracking-tight"
           >
-            Workspace Setup
+            Project Setup
           </h3>
         </div>
 
@@ -492,7 +492,7 @@
                 size="18"
               />
               <Icon v-else name="lucide:rocket" size="18" />
-              {{ isCreating ? 'Launching...' : 'Launch Workspace' }}
+              {{ isCreating ? 'Launching...' : 'Launch Project' }}
             </button>
           </div>
 
@@ -769,8 +769,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { CatalogItem } from '~/schemas/catalog.schema'
-import type { Project } from '~/schemas/project.schema'
+import type { CatalogItem } from '@teqciti-layer/schemas/catalog.schema'
+import type { Project } from '@teqciti-layer/schemas/project.schema'
 
 definePageMeta({
   requiresAuth: true,

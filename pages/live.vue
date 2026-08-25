@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 
 definePageMeta({
   requiresAuth: true,
+  requiredCapability: 'view_teqciti_live',
   layout: 'fullscreen',
 })
 
@@ -20,20 +21,29 @@ const {
   connectionStatus,
   getMonthOverMonthTrend,
   getNextMonthPlan,
+  getPreviousMonthSummary,
   disconnect,
 } = await useLiveBulletin(currentOrg.value.id)
 
 const trend = ref<any>(null)
 const nextMonthPlan = ref<any[]>([])
+const previousSummary = ref<any>(null)
+
+const trendDiff = computed<number | null>(() => {
+  if (!trend.value || trend.value.current === null || trend.value.previous === null) return null
+  return Math.round(trend.value.current - trend.value.previous)
+})
 
 onMounted(async () => {
   try {
-    const [trendData, nextData] = await Promise.all([
+    const [trendData, nextData, previousSummaryData] = await Promise.all([
       getMonthOverMonthTrend(currentOrg.value.id),
       getNextMonthPlan(currentOrg.value.id),
+      getPreviousMonthSummary(currentOrg.value.id),
     ])
     trend.value = trendData
     nextMonthPlan.value = nextData
+    previousSummary.value = previousSummaryData
   } catch (e) {
     console.error('Supplemental data skipped:', e)
   }
@@ -221,57 +231,63 @@ const getPriorityDot = (priority: string | null) => {
             ></div>
           </div>
 
-          <div
-            class="grid grid-cols-2 gap-3 2xl:gap-4 border-t border-zinc-100 pt-3 lg:pt-4 2xl:pt-5"
-          >
-            <div>
               <div
-                class="text-[8px] lg:text-[9px] 2xl:text-[10px] text-zinc-400 font-medium uppercase tracking-widest mb-1"
-              >
-                Status
-              </div>
-              <div
-                class="text-[11px] lg:text-xs 2xl:text-sm font-medium mt-1"
-                :class="
-                  sprintSummary?.onTrack ? 'text-green-600' : 'text-red-500'
-                "
-              >
-                {{ sprintSummary?.onTrack ? 'On Track' : 'Behind' }}
-              </div>
-            </div>
-            <div>
-              <div
-                class="text-[8px] lg:text-[9px] 2xl:text-[10px] text-zinc-400 font-medium uppercase tracking-widest mb-1"
-              >
-                Velocity
-              </div>
-              <div class="flex items-end gap-1">
-                <div
-                  class="text-sm lg:text-base 2xl:text-lg font-semibold text-zinc-800"
-                >
-                  {{
-                    sprintSummary?.velocity
-                      ? sprintSummary.velocity.toFixed(1)
-                      : 0
-                  }}<span
-                    class="text-[9px] lg:text-[10px] 2xl:text-xs font-medium text-zinc-400 ml-1"
-                    >pts/day</span
+                  class="grid grid-cols-2 gap-3 2xl:gap-4 border-t border-zinc-100 pt-3 lg:pt-4 2xl:pt-5"
                   >
-                </div>
+                  <div>
+                      <div
+                          class="text-[8px] lg:text-[9px] 2xl:text-[10px] text-zinc-400 font-medium uppercase tracking-widest mb-1"
+                          >
+                          Status
+                      </div>
+                          <div
+                              class="text-[11px] lg:text-xs 2xl:text-sm font-medium mt-1"
+                              :class="
+                              sprintSummary?.onTrack === true ? 'text-green-600' :
+                              sprintSummary?.onTrack === false ? 'text-red-500' :
+                              'text-zinc-300'
+                              "
+                              >
+                              {{
+                              sprintSummary?.onTrack === true ? 'On Track' :
+                              sprintSummary?.onTrack === false ? 'Behind' :
+                              '--'
+                              }}
+                          </div>   
+                  </div>
+                  <div>
+                      <div
+                          class="text-[8px] lg:text-[9px] 2xl:text-[10px] text-zinc-400 font-medium uppercase tracking-widest mb-1"
+                          >
+                          Velocity
+                      </div>
+                          <div class="flex items-end gap-1">
+                              <div
+                                  class="text-sm lg:text-base 2xl:text-lg font-semibold text-zinc-800"
+                                  >
+                                  {{
+                                  sprintSummary?.velocity
+                                  ? sprintSummary.velocity.toFixed(1)
+                                  : 0
+                                  }}<span
+                                      class="text-[9px] lg:text-[10px] 2xl:text-xs font-medium text-zinc-400 ml-1"
+                                      >pts/day</span
+                                  >
+                              </div>
+                          </div>
+                                  <div
+                                      v-if="previousSummary"
+                                      class="text-[8px] lg:text-[9px] 2xl:text-[10px] text-zinc-400 font-medium mt-1"
+                                      >
+                                      Last Mo:
+                                      {{
+                                      previousSummary.velocity
+                                      ? previousSummary.velocity.toFixed(1)
+                                      : 0
+                                      }}
+                                  </div>
+                  </div>
               </div>
-              <div
-                v-if="previousSummary"
-                class="text-[8px] lg:text-[9px] 2xl:text-[10px] text-zinc-400 font-medium mt-1"
-              >
-                Last Mo:
-                {{
-                  previousSummary.velocity
-                    ? previousSummary.velocity.toFixed(1)
-                    : 0
-                }}
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- Agency Highlights -->

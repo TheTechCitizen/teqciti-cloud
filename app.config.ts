@@ -37,6 +37,7 @@ export default defineAppConfig({
       'filter_leads',
       'view_lead_totals',
       'export_report',
+      'view_teqciti_live'
     ],
     owner: [
       'view_projects',
@@ -49,6 +50,7 @@ export default defineAppConfig({
       'view_billing',
       'filter_leads',
       'view_lead_totals',
+      'view_teqciti_live'
     ],
   },
 

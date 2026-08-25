@@ -87,7 +87,7 @@ const rawNavItems = [
     label: 'Call Center',
     capability: 'view_call_center',
   },
-  { path: '/live', icon: 'lucide:tv-minimal-play', label: 'Live' },
+  { path: '/live', icon: 'lucide:tv-minimal-play', label: 'Live', capability: 'view_teqciti_live', },
   {
     path: '/reports',
     icon: 'lucide:bar-chart-3',

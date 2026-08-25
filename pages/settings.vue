@@ -672,108 +672,111 @@
           <BillingPanel :organization="currentOrg" />
         </section>
 
-        <section
-          v-if="activeTab === 'account'"
-          class="animate-in fade-in duration-300 space-y-6"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <h2 class="text-xl font-bold text-white">Account Manager</h2>
-              <p class="text-sm text-slate-400 mt-1">
-                Your dedicated points of contact
-              </p>
-            </div>
-          </div>
-          <div
-            class="rounded-2xl bg-slate-800/40 ring-1 ring-slate-700/50 backdrop-blur-sm overflow-hidden"
-          >
-            <div
-              v-if="manager && manager.length > 0"
-              class="divide-y divide-slate-700/50"
-            >
-              <div
-                v-for="user in manager"
-                :key="user.id"
-                class="flex flex-col sm:flex-row sm:items-center justify-between p-5 sm:p-6 hover:bg-slate-800/60 transition-colors gap-5"
-              >
-                <div class="flex items-center gap-4">
-                  <div
-                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-white text-lg font-bold uppercase shadow-lg shadow-purple-500/20"
-                  >
-                    {{ user.name.charAt(0) }}
-                  </div>
+           
+<section
+  v-if="activeTab === 'account'"
+  class="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8"
+>
+  <!-- Header with Gradient Text -->
+  <header class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <h2 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-500 tracking-tight">
+        Account
+      </h2>
+      <p class="mt-2 text-sm text-slate-400 font-medium">
+        Your personal points of contact for this account
+      </p>
+    </div>
+  </header>
 
-                  <div>
-                    <div class="flex items-center gap-2 mb-1">
-                      <p class="text-base font-bold text-white">
-                        {{ user.name }}
-                      </p>
-                      <span
-                        class="rounded-full bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold text-purple-400 ring-1 ring-inset ring-purple-500/20 uppercase tracking-wider"
-                      >
-                        {{ user.roleLabel }}
-                      </span>
-                    </div>
+  <!-- Dynamic Grid Layout (Changes from 1 col to 2 cols if multiple managers) -->
+  <div
+    v-if="manager?.length"
+    class="grid gap-6 grid-cols-1 xl:grid-cols-2"
+  >
+    <!-- Individual Manager "ID Card" -->
+    <div
+      v-for="user in manager"
+      :key="user.id"
+      class="group relative rounded-[2rem] bg-slate-800/20 p-[1px] overflow-hidden"
+    >
+      <!-- Animated Border Element -->
+      <div class="absolute inset-0 bg-gradient-to-br from-slate-700/50 via-transparent to-purple-500/30 opacity-40 transition-opacity duration-500 group-hover:opacity-100"></div>
 
-                    <div
-                      class="flex flex-wrap items-center gap-4 text-sm text-slate-400 mt-1.5"
-                    >
-                      <a
-                        v-if="user.phone"
-                        :href="`tel:${user.phone}`"
-                        class="flex items-center gap-1.5 hover:text-white transition-colors"
-                      >
-                        <Icon name="lucide:phone" size="14" />
-                        <span>{{ user.phone }}</span>
-                      </a>
-                      <a
-                        v-if="user.email"
-                        :href="`mailto:${user.email}`"
-                        class="flex items-center gap-1.5 hover:text-white transition-colors"
-                      >
-                        <Icon name="lucide:mail" size="14" />
-                        <span>{{ user.email }}</span>
-                      </a>
-                    </div>
-                  </div>
-                </div>
-                <div class="shrink-0 w-full sm:w-auto">
-                  <a
-                    :href="`mailto:${user.email || ''}`"
-                    class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-700 px-4 py-2.5 sm:py-2 text-sm font-semibold text-white hover:bg-slate-600 transition-colors"
-                  >
-                    <Icon name="lucide:message-square" size="16" />
-                    Send Message
-                  </a>
-                </div>
-              </div>
-            </div>
-            <div
-              v-else
-              class="flex flex-col items-center justify-center p-10 sm:p-14 text-center"
-            >
-              <div
-                class="flex h-16 w-16 items-center justify-center rounded-full bg-slate-800/80 ring-1 ring-slate-700 text-slate-500 mb-5 shadow-inner"
-              >
-                <Icon name="lucide:user-minus" size="28" />
-              </div>
-              <h3 class="text-lg font-bold text-white mb-2">
-                No Manager Assigned
-              </h3>
-              <p class="text-sm text-slate-400 max-w-sm mx-auto">
-                Your account doesn't have a dedicated relationship manager
-                assigned right now. Our general support team is still here to
-                help!
-              </p>
-              <button
-                class="mt-6 inline-flex items-center gap-2 rounded-lg bg-slate-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-600 transition-colors"
-              >
-                <Icon name="lucide:life-buoy" size="16" />
-                Contact Support
-              </button>
-            </div>
+      <!-- Card Inner Container -->
+      <div class="relative h-full rounded-[31px] bg-slate-900/80 backdrop-blur-xl p-7 flex flex-col justify-between overflow-hidden">
+        
+        <!-- Ambient Background Glow -->
+        <div class="absolute -top-24 -right-24 h-48 w-48 rounded-full bg-purple-600/10 blur-3xl transition-transform duration-700 group-hover:scale-150 group-hover:bg-purple-500/20"></div>
+
+        <!-- Top Section: Avatar & Status -->
+        <div class="flex items-start justify-between relative z-10">
+          <div class="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-2xl font-bold text-white shadow-lg shadow-purple-500/25 ring-2 ring-white/10 rotate-[-3deg] transition-transform duration-300 group-hover:rotate-0 group-hover:scale-110">
+            {{ user.name.charAt(0).toUpperCase() }}
+            <!-- Online Indicator Dot -->
+            <div class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-slate-900 bg-emerald-400"></div>
           </div>
-        </section>
+          
+          <!-- Role Badge -->
+          <div class="flex items-center gap-2 rounded-full bg-slate-800/80 py-1 pl-1.5 pr-3 ring-1 ring-white/5 backdrop-blur-md">
+             <div class="h-2 w-2 rounded-full bg-purple-400 shadow-[0_0_8px_rgba(192,132,252,0.8)] animate-pulse"></div>
+             <span class="text-[11px] font-bold uppercase tracking-widest text-slate-300">
+               {{ user.roleLabel }}
+             </span>
+          </div>
+        </div>
+
+        <!-- Middle Section: Name & Contact Pills -->
+        <div class="mt-6 relative z-10">
+          <h3 class="text-xl font-bold text-white tracking-wide">{{ user.name }}</h3>
+          
+          <div class="mt-4 flex flex-wrap gap-3">
+            <a
+              v-if="user.phone"
+              :href="`tel:${user.phone}`"
+              class="flex items-center gap-2 rounded-xl bg-slate-800/50 px-3.5 py-2 text-xs font-medium text-slate-300 ring-1 ring-white/5 transition-all hover:bg-white hover:text-slate-900 hover:ring-transparent hover:shadow-lg hover:shadow-white/10"
+            >
+              <Icon name="lucide:phone" size="14" />
+              Call
+            </a>
+          </div>
+        </div>
+
+        <!-- Bottom Section: Action Button -->
+        <div class="mt-8 pt-5 border-t border-slate-700/50 relative z-10">
+          <TSupportTriggerD
+            variant="button"
+            text="Message"
+            department="manager"
+            icon="lucide:sparkles"
+            class="w-full flex items-center justify-center gap-2 rounded-xl bg-purple-500/10 px-4 py-3 text-sm font-semibold text-purple-300 transition-all hover:bg-purple-500 hover:text-white"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State (Dashed Drop-zone Style) -->
+  <div
+    v-else
+    class="relative overflow-hidden rounded-[2rem] border-2 border-dashed border-slate-700/50 bg-slate-800/10 p-12 text-center transition-colors hover:border-slate-600 sm:p-16"
+  >
+    <!-- Background Radar Sweep Effect -->
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+
+    <div class="relative z-10 mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-3xl bg-slate-800/80 shadow-2xl ring-1 ring-white/10 rotate-3 transition-transform hover:rotate-0">
+      <div class="absolute inset-0 rounded-3xl bg-purple-500/20 blur-xl animate-pulse"></div>
+      <Icon name="lucide:users" size="40" class="text-slate-400" />
+    </div>
+    
+    <h3 class="relative z-10 mb-3 text-2xl font-bold text-white tracking-tight">
+      Awaiting Assignment
+    </h3>
+    <p class="relative z-10 mx-auto mb-8 max-w-md text-slate-400 font-medium">
+      You don't have a dedicated relationship manager mapped to your account yet. Our general support team is standing by to assist you in the meantime. Please click the support tab to send us a message.
+    </p>
+    </div>
+</section>
 
         <section
           v-if="activeTab === 'support'"
@@ -807,6 +810,8 @@ const {
   myOrgRole,
   contactPerson,
   accountManager,
+  accountManagerDetails, 
+  relationshipManagerDetails,
   address,
   phone,
   email,
@@ -865,19 +870,13 @@ const visibleTabs = computed(() => {
 // Set the default active tab to the first visible one
 const activeTab = ref(visibleTabs.value[0]?.id || 'org')
 
-const { accountManagerDetails, relationshipManagerDetails } =
-  await useCurrentOrg()
-
 const manager = computed(() => {
   const entries = []
   if (accountManagerDetails.value) {
     const am = accountManagerDetails.value
     entries.push({
       id: am.id,
-      name:
-        [am.firstName, am.lastName].filter(Boolean).join(' ') ||
-        am.email ||
-        'Account Manager',
+      name: am.firstName || am.email || 'Account Manager',
       phone: am.phone,
       email: am.email,
       roleLabel: 'Account Manager',
@@ -887,10 +886,7 @@ const manager = computed(() => {
     const rm = relationshipManagerDetails.value
     entries.push({
       id: rm.id,
-      name:
-        [rm.firstName, rm.lastName].filter(Boolean).join(' ') ||
-        rm.email ||
-        'Relationship Manager',
+      name: rm.firstName || rm.email || 'Relationship Manager',
       phone: rm.phone,
       email: rm.email,
       roleLabel: 'Relationship Manager',
